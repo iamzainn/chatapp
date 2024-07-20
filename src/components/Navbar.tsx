@@ -4,6 +4,7 @@ import Link from 'next/link';
 import React from 'react'
 import { Button } from './ui/button';
 import { UserDropdown } from './UserDropdown';
+import PreferencesTab from './Preference-tab';
 
 const Navbar = async() => {
 
@@ -17,7 +18,7 @@ const Navbar = async() => {
           <WebcamIcon className="h-8 w-8 text-primary" />
           <span className="ml-2 text-lg font-semibold">Chatter</span>
         </Link>
-        <nav className="hidden space-x-4 sm:flex">
+       {user ?<div className='hidden sm:flex'><PreferencesTab ></PreferencesTab></div>: <nav className="hidden space-x-4 sm:flex">
           <Link href="#features" className="text-sm font-medium hover:text-primary transition-colors" prefetch={false}>
             Features
           </Link>
@@ -25,7 +26,7 @@ const Navbar = async() => {
             Pricing
           </Link>
 
-        </nav>
+        </nav>}
        {user ? (
           <UserDropdown
             email={user.email as string}

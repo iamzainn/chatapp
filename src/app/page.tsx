@@ -3,6 +3,7 @@ import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
 import Link from "next/link"
 import { redirect } from "next/navigation";
 
+
 export default async function Home() {
   const { getUser} = getKindeServerSession(); 
   const user = await getUser();
