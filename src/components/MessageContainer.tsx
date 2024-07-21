@@ -1,6 +1,8 @@
 import { useEffect } from "react";
 // import ChatBottomBar from "./ChatBottomBar";
 import ChatTopBar from "./ChatTopBar";
+import MessageList from "./MessageList";
+import ChatBottomBar from "./ChatBottomBar";
 // import MessageList from "./MessageList";
 // import { useSelectedUser } from "@/store/useSelectedUser";
 
@@ -14,8 +16,8 @@ const MessageContainer = () => {
 			<ChatTopBar />
 
 			<div className='w-full overflow-y-auto overflow-x-hidden h-full flex flex-col'>
-				{/* <MessageList /> */}
-				{/* <ChatBottomBar /> */}
+				<MessageList />
+				<ChatBottomBar />
 			</div>
 		</div>
 	);
