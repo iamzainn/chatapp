@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
 import { AnimatePresence, motion } from "framer-motion";
 import { Avatar, AvatarImage } from "../components/ui/avatar";
-// import { useSelectedUser } from "@/store/useSelectedUser";
+import { useSelectedUser } from "../store/useSelectedUser";
 import { useKindeBrowserClient } from "@kinde-oss/kinde-auth-nextjs";
 
 import {  useRef } from "react";
@@ -9,10 +9,10 @@ import { USERS,messages } from "@/lib/dummy";
 
 
 const MessageList = () => {
-	// const { selectedUser } = useSelectedUser();
-    const selectedUser = USERS[0];
-	// const { user: currentUser, isLoading: isUserLoading } = useKindeBrowserClient();
-    const currentUser = USERS[1];
+	const { selectedUser } = useSelectedUser();
+    
+	const { user: currentUser, isLoading: isUserLoading } = useKindeBrowserClient();
+    
 	const messageContainerRef = useRef<HTMLDivElement>(null);
 
 	
@@ -71,7 +71,7 @@ const MessageList = () => {
 								{message.senderId === currentUser?.id && (
 									<Avatar className='flex justify-center items-center'>
 										<AvatarImage
-											src={currentUser?.image || "/user-placeholder.png"}
+											src={currentUser?.picture || "/user-placeholder.png"}
 											alt='User Image'
 											className='border-2 border-white rounded-full'
 										/>

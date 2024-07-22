@@ -9,8 +9,9 @@ import {
 } from "@/components/ui/resizable";
 import { cn } from "@/lib/utils";
 import Sidebar from "./Sidebar";
-import { User,USERS } from "@/lib/dummy";
 import MessageContainer from "./MessageContainer";
+import { useSelectedUser } from "@/store/useSelectedUser";
+import { User } from "@/lib/dummy";
 
 
 
@@ -30,11 +31,12 @@ export function ChatLayout({
   const [isCollapsed, setIsCollapsed] = React.useState(defaultCollapsed);
 
   const [isMobile, setIsMobile] = useState(false);
+  const {selectedUser} = useSelectedUser();
 
-  const selectedUser = users[0];
+  
 
   useEffect(() => {
-    console.log("use effect")
+    
     const checkScreenWidth = () => {
         console.log("check screen width")
       setIsMobile(window.innerWidth <= 768);

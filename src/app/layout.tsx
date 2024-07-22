@@ -8,6 +8,7 @@ import Navbar from "@/components/Navbar";
 
 
 import { ThemeProvider } from "@/components/theme-provider"
+import TanStackProvider from "@/components/Tanstack-provider";
 
 const fontSans = FontSans({
   subsets: ["latin"],
@@ -38,9 +39,14 @@ export default function RootLayout({
             enableSystem
             disableTransitionOnChange
           >
+            
+
+            <TanStackProvider>
             <Navbar></Navbar>
-            {children}
+            {children} 
+            </TanStackProvider>
           </ThemeProvider>
+
         </body>
     </html>
   );
