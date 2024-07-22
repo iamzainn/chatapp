@@ -1,29 +1,33 @@
 import { AnimatePresence, motion } from "framer-motion";
-import { Image as ImageIcon, Loader, SendHorizontal, ThumbsUp } from "lucide-react";
+import { Image as ImageIcon, Loader2, SendHorizontal, ThumbsUp } from "lucide-react";
 import Image from "next/image";
 import { Textarea } from "../components/ui/textarea";
-import { useEffect, useRef, useState } from "react";
+import {  useRef, useState } from "react";
 import EmojiPicker from "../components/EmojiPicker";
 import { Button } from "../components/ui/button";
 import useSound from "use-sound";
 import { usePreferences } from "@/store/usePreferences";
 
-// import { CldUploadWidget, CloudinaryUploadWidgetInfo } from "next-cloudinary";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "../components/ui/dialog";
 import { useKindeBrowserClient } from "@kinde-oss/kinde-auth-nextjs";
-import { USERS } from "@/lib/dummy";
-// import { pusherClient } from "@/lib/pusher";
-// import { Message } from "../lib/";
+
+import { useFormStatus } from "react-dom";
+import { Input } from "./ui/input";
+import { useSelectedUser } from "@/store/useSelectedUser";
+import { sendMessageAction } from "@/action";
+
 
 const ChatBottomBar = () => {
 	const [message, setMessage] = useState("");
 	const textAreaRef = useRef<HTMLTextAreaElement>(null);
-	// const { selectedUser } = useSelectedUser();
-    const selectedUser = USERS[0];
+
+	const { selectedUser } = useSelectedUser();
+	
+    
 	const { user: currentUser } = useKindeBrowserClient();
 
 	const { soundEnabled } = usePreferences();
-	// const queryClient = useQueryClient();
+	
 
 	const [imgUrl, setImgUrl] = useState("");
 
@@ -63,10 +67,9 @@ const ChatBottomBar = () => {
 
 					<DialogFooter>
 						<Button
-							type='submit'
+							type='button'
 							onClick={() => {
-								// sendMessage({ content: imgUrl, messageType: "image", receiverId: selectedUser?.id! });
-								// setImgUrl("");
+								
 							}}
 						>
 							Send
@@ -75,7 +78,22 @@ const ChatBottomBar = () => {
 				</DialogContent>
 			</Dialog>
 
+			
 			<AnimatePresence>
+
+				<form action={async (formData:FormData)=>{
+                  await sendMessageAction(formData);
+				  if(textAreaRef.current){
+					textAreaRef.current.value="";
+					textAreaRef.current?.focus();
+				  }				 
+
+				  
+
+				  
+				}} className='w-full flex items-center gap-2'>
+				<Input type="text" style={{ display: 'none' }} name="receiverId" value={selectedUser?.id}></Input>
+				<Input type="text" style={{display:'none'}}  name="messageType" value={"text"}></Input>		
 				<motion.div
 					layout
 					initial={{ opacity: 0, scale: 1 }}
@@ -91,15 +109,17 @@ const ChatBottomBar = () => {
 					className='w-full relative'
 				>
 					<Textarea
+					    name="content"
 						autoComplete='off'
 						placeholder='Aa'
 						rows={1}
+						value={message}
 						className='w-full border rounded-full flex items-center h-9 resize-none overflow-hidden
 						bg-background min-h-0'
-						value={message}
+						
 						
 						onChange={(e) => {
-							setMessage(e.target.value);
+							setMessage(e.target.value); 
 							playRandomKeyStrokeSound();
 						}}
 						ref={textAreaRef}
@@ -117,16 +137,12 @@ const ChatBottomBar = () => {
 				</motion.div>
 
 				{message.trim() ? (
-					<Button
-						className='h-9 w-9 dark:bg-muted dark:text-muted-foreground dark:hover:bg-muted dark:hover:text-white shrink-0'
-						variant={"ghost"}
-						size={"icon"}
-						
-					>
-						<SendHorizontal size={20} className='text-muted-foreground' />
-					</Button>
+					
+                    <SendMessageButton></SendMessageButton>
+					
 				) : (
 					<Button
+					   type="button"
 						className='h-9 w-9 dark:bg-muted dark:text-muted-foreground dark:hover:bg-muted dark:hover:text-white shrink-0'
 						variant={"ghost"}
 						size={"icon"}
@@ -136,15 +152,36 @@ const ChatBottomBar = () => {
 								size={20}
 								className='text-muted-foreground'
 								onClick={() => {
-								// sendMessage({ content: "👍", messageType: "text", receiverId: selectedUser?.id! });
+									setMessage("👍");
 								}}
 							/>
 						)}
 						
 					</Button>
+
 				)}
+				</form>
+			   
+				
 			</AnimatePresence>
 		</div>
 	);
 };
 export default ChatBottomBar;
+
+
+const SendMessageButton = () =>{
+	const { pending } = useFormStatus();
+
+	 return (
+		        <Button
+					   type="submit"
+						className='h-9 w-9 dark:bg-muted dark:text-muted-foreground dark:hover:bg-muted dark:hover:text-white shrink-0'
+						variant={"ghost"}
+						size={"icon"}
+						
+					>
+					{pending ?<Loader2 size={20} className='text-muted-foreground animate-spin'></Loader2> :	<SendHorizontal size={20} className='text-muted-foreground' />}
+					</Button>
+	)
+}
