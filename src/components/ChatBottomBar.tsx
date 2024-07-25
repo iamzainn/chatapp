@@ -1,11 +1,11 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { Image as ImageIcon, Loader2, SendHorizontal, ThumbsUp } from "lucide-react";
 import Image from "next/image";
-import { Textarea } from "../components/ui/textarea";
+
 import {  useRef, useState } from "react";
 import EmojiPicker from "../components/EmojiPicker";
 import { Button } from "../components/ui/button";
-import useSound from "use-sound";
+
 import { usePreferences } from "@/store/usePreferences";
 
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "../components/ui/dialog";
@@ -20,30 +20,58 @@ import { sendMessageAction } from "@/action";
 const ChatBottomBar = () => {
 	const [message, setMessage] = useState("");
 	const textAreaRef = useRef<HTMLTextAreaElement>(null);
+	
+	const [isGroupChat, setIsGroupChat] = useState(false);
+	const [isloading, setIsLoading] = useState(false);
 
 	const { selectedUser } = useSelectedUser();
 	
+	
     
-	const { user: currentUser } = useKindeBrowserClient();
+	
 
-	const { soundEnabled } = usePreferences();
+	
 	
 
 	const [imgUrl, setImgUrl] = useState("");
 
-	const [playSound1] = useSound("/sounds/keystroke1.mp3");
-	const [playSound2] = useSound("/sounds/keystroke2.mp3");
-	const [playSound3] = useSound("/sounds/keystroke3.mp3");
-	const [playSound4] = useSound("/sounds/keystroke4.mp3");
+	
 
-	const [playNotificationSound] = useSound("/sounds/notification.mp3");
 
-	const playSoundFunctions = [playSound1, playSound2, playSound3, playSound4];
+	const handleSendMessage = async(content:string,receiverId:string,isGroupChat:boolean)=>{
+		setIsLoading(true)
+		try{
+			await sendMessageAction(content,receiverId,isGroupChat)
+			setMessage("")
+		}catch(e){
+			console.log(e)
+		}
+		finally{
+			setIsLoading(false)
+		}
+	}
 
-	const playRandomKeyStrokeSound = () => {
-		const randomIndex = Math.floor(Math.random() * playSoundFunctions.length);
-		soundEnabled && playSoundFunctions[randomIndex]();
+
+	const handleKeyDown = async (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+		if (e.key === "Enter" && !e.shiftKey) {
+			e.preventDefault();
+			await handleSendMessage(message,selectedUser?.id as string,isGroupChat)
+			setMessage("");
+		}
+
+		if (e.key === "Enter" && e.shiftKey) {
+			e.preventDefault();
+			setMessage(message + "\n");
+
+			
+		}
 	};
+	const handleResize = () => {
+		if (textAreaRef.current) {
+		  textAreaRef.current.style.height = 'auto';
+		  textAreaRef.current.style.height = `${textAreaRef.current.scrollHeight}px`;
+		}
+	  };
 
 	
 
@@ -54,8 +82,6 @@ const ChatBottomBar = () => {
 
 	return (
 		<div className='p-2 flex justify-between w-full items-center gap-2'>
-		
-
 			<Dialog open={!!imgUrl}>
 				<DialogContent>
 					<DialogHeader>
@@ -81,19 +107,9 @@ const ChatBottomBar = () => {
 			
 			<AnimatePresence>
 
-				<form action={async (formData:FormData)=>{
-                  await sendMessageAction(formData);
-				  if(textAreaRef.current){
-					textAreaRef.current.value="";
-					textAreaRef.current?.focus();
-				  }				 
-
-				  
-
-				  
-				}} className='w-full flex items-center gap-2'>
-				<Input type="text" style={{ display: 'none' }} name="receiverId" value={selectedUser?.id}></Input>
-				<Input type="text" style={{display:'none'}}  name="messageType" value={"text"}></Input>		
+				<form    
+				 className='w-full flex items-center gap-2'>
+						
 				<motion.div
 					layout
 					initial={{ opacity: 0, scale: 1 }}
@@ -108,39 +124,50 @@ const ChatBottomBar = () => {
 					}}
 					className='w-full relative'
 				>
-					<Textarea
-					    name="content"
-						autoComplete='off'
-						placeholder='Aa'
-						rows={1}
-						value={message}
-						className='w-full border rounded-full flex items-center h-9 resize-none overflow-hidden
-						bg-background min-h-0'
-						
-						
-						onChange={(e) => {
-							setMessage(e.target.value); 
-							playRandomKeyStrokeSound();
-						}}
-						ref={textAreaRef}
-					/>
-					<div className='absolute right-2 bottom-0.5'>
-						<EmojiPicker
-							onChange={(emoji) => {
-								setMessage(message + emoji);
-								if (textAreaRef.current) {
-									textAreaRef.current.focus();
-								}
-							}}
-						/>
-					</div>
+				<textarea
+				name="content"
+				autoComplete="off"
+				placeholder="Type your message..."
+				rows={message.trim() === '' && 1 ||  1}
+				onKeyDown={handleKeyDown}
+				value={message}
+				className="w-full px-4 py-4 rounded-lg  resize-none overflow-hidden bg-transparent"
+				onChange={(e) => {
+				  setMessage(e.target.value);
+				  handleResize();
+				}}
+				ref={textAreaRef}
+			  />
+				
+					
 				</motion.div>
+				<EmojiPicker onChange={function (emoji: string): void {
+						setMessage(message + emoji);
+						textAreaRef.current?.focus();
+					} }></EmojiPicker>
 
 				{message.trim() ? (
 					
-                    <SendMessageButton></SendMessageButton>
+                    <Button
+					   disabled={isloading}
+					   onClick={async ()=>{
+						   await handleSendMessage(message,selectedUser?.id as string,isGroupChat)
+					   }}
+					   type="submit"
+						className='h-9 w-9 dark:bg-muted dark:text-muted-foreground dark:hover:bg-muted dark:hover:text-white shrink-0'
+						variant={"ghost"}
+						size={"icon"}
+						
+					>
+					{isloading ?<Loader2 size={20} className='text-muted-foreground animate-spin'></Loader2> :	<SendHorizontal size={20} className='text-muted-foreground' />}
+					</Button>
 					
 				) : (
+					
+					
+					
+					<>
+					
 					<Button
 					   type="button"
 						className='h-9 w-9 dark:bg-muted dark:text-muted-foreground dark:hover:bg-muted dark:hover:text-white shrink-0'
@@ -152,12 +179,14 @@ const ChatBottomBar = () => {
 								size={20}
 								className='text-muted-foreground'
 								onClick={() => {
-									setMessage("👍");
+								    handleSendMessage("👍",selectedUser?.id as string,isGroupChat)
 								}}
 							/>
 						)}
 						
 					</Button>
+					</>
+					
 
 				)}
 				</form>
@@ -170,18 +199,3 @@ const ChatBottomBar = () => {
 export default ChatBottomBar;
 
 
-const SendMessageButton = () =>{
-	const { pending } = useFormStatus();
-
-	 return (
-		        <Button
-					   type="submit"
-						className='h-9 w-9 dark:bg-muted dark:text-muted-foreground dark:hover:bg-muted dark:hover:text-white shrink-0'
-						variant={"ghost"}
-						size={"icon"}
-						
-					>
-					{pending ?<Loader2 size={20} className='text-muted-foreground animate-spin'></Loader2> :	<SendHorizontal size={20} className='text-muted-foreground' />}
-					</Button>
-	)
-}

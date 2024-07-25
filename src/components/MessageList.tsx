@@ -1,15 +1,17 @@
 import { cn } from "@/lib/utils";
 import { AnimatePresence, motion } from "framer-motion";
 import { Avatar, AvatarImage } from "../components/ui/avatar";
-import { useSelectedUser } from "../store/useSelectedUser";
+import { useSelectedChat } from "../store/useSelectedUser";
 import { useKindeBrowserClient } from "@kinde-oss/kinde-auth-nextjs";
 
 import {  useRef } from "react";
-import { USERS,messages } from "@/lib/dummy";
+
 
 
 const MessageList = () => {
-	const { selectedUser } = useSelectedUser();
+
+	const {selectedChat}=useSelectedChat();
+
     
 	const { user: currentUser, isLoading: isUserLoading } = useKindeBrowserClient();
     
@@ -21,10 +23,10 @@ const MessageList = () => {
 
 	return (
 		<div ref={messageContainerRef} className='w-full overflow-y-auto overflow-x-hidden h-full flex flex-col'>
-			{/* This component ensure that an animation is applied when items are added to or removed from the list */}
+			
 			<AnimatePresence>
 				{
-					messages?.map((message, index) => (
+					selectedChat?.messages?.map((message, index) => (
 						<motion.div
 							key={index}
 							layout
@@ -36,7 +38,7 @@ const MessageList = () => {
 								layout: {
 									type: "spring",
 									bounce: 0.3,
-									duration: messages.indexOf(message) * 0.05 + 0.2,
+									duration: selectedChat?.messages.indexOf(message) * 0.05 + 0.2,
 								},
 							}}
 							style={{
@@ -49,25 +51,25 @@ const MessageList = () => {
 							)}
 						>
 							<div className='flex gap-3 items-center'>
-								{message.senderId === selectedUser?.id && (
+								{message.senderId === selectedChat?.user?.id && (
 									<Avatar className='flex justify-center items-center'>
 										<AvatarImage
-											src={selectedUser?.image}
+											src={selectedChat?.user?.profileImage || "/user-placeholder.png"}
 											alt='User Image'
 											className='border-2 border-white rounded-full'
 										/>
 									</Avatar>
 								)}
-								{message.messageType === "text" ? (
+								{message.type === "text" ? (
 									<span className='bg-accent p-3 rounded-md max-w-xs'>{message.content}</span>
 								) : (
-									<img
-										src={message.content}
-										alt='Message Image'
-										className='border p-2 rounded h-40 md:h-52 object-cover'
-									/>
+									<><img
+											src={message.content}
+											alt='Message Image'
+											className='border p-2 rounded h-40 md:h-52 object-cover' /><span className='bg-accent p-3 rounded-md max-w-xs'>{message.content}</span></>
 								)}
 
+                                
 								{message.senderId === currentUser?.id && (
 									<Avatar className='flex justify-center items-center'>
 										<AvatarImage

@@ -10,7 +10,7 @@ import {
 import { cn } from "@/lib/utils";
 import Sidebar from "./Sidebar";
 import MessageContainer from "./MessageContainer";
-import { useSelectedUser } from "@/store/useSelectedUser";
+import { useSelectedChat, useSelectedUser } from "@/store/useSelectedUser";
 import { User } from "@/lib/dummy";
 
 
@@ -19,19 +19,19 @@ interface ChatLayoutProps {
   defaultLayout: number[] | undefined;
   defaultCollapsed?: boolean;
   navCollapsedSize: number;
-  users: User[];
+  chats: ChatResponse[];
 }
 
 export function ChatLayout({
   defaultLayout = [320, 480],
   defaultCollapsed = true,
   navCollapsedSize,
-  users,
+  chats,
 }: ChatLayoutProps) {
   const [isCollapsed, setIsCollapsed] = React.useState(defaultCollapsed);
 
   const [isMobile, setIsMobile] = useState(false);
-  const {selectedUser} = useSelectedUser();
+   const {selectedChat,setSelectedChat} =useSelectedChat();
 
   
 
@@ -72,14 +72,14 @@ export function ChatLayout({
         maxSize={isMobile ? 8 : 30}
         onCollapse={() => {
           setIsCollapsed(true);
-        //   console.log("collapse")
+        
           document.cookie = `react-resizable-panels:collapsed=${JSON.stringify(
             true
           )}`;
         }}
         onExpand={() => {
           setIsCollapsed(false);
-        //   console.log("expand")
+        
           document.cookie = `react-resizable-panels:collapsed=${JSON.stringify(
             false
           )}`;
@@ -88,11 +88,11 @@ export function ChatLayout({
           isCollapsed && "min-w-[50px] md:min-w-[70px] transition-all duration-300 ease-in-out"
         )}
       >
-        <Sidebar isCollapsed={isCollapsed} users={users} />
+        <Sidebar isCollapsed={isCollapsed} chats={chats} />
       </ResizablePanel>
       <ResizableHandle withHandle />
       <ResizablePanel defaultSize={defaultLayout[1]} minSize={30}>
-				{!selectedUser && (
+				{!selectedChat && (
 					<div className='flex justify-center items-center h-full w-full px-10'>
 						<div className='flex flex-col justify-center items-center gap-4'>
 							<img src='/logo.png' alt='Logo' className='w-full md:w-2/3 lg:w-1/2' />
@@ -100,7 +100,7 @@ export function ChatLayout({
 						</div>
 					</div>
 				)}
-				{selectedUser && <MessageContainer />}
+				{selectedChat && <MessageContainer />}
 			</ResizablePanel>
       
     </ResizablePanelGroup>

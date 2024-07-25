@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 import jwksClient from "jwks-rsa";
 import jwt from "jsonwebtoken";
-import { redis } from "@/lib/db";
+import prisma, { redis } from "@/lib/db";
 import { ifError } from "assert";
-// import prisma from "@/lib/db";
+
 // import {getKindeServerSession} from "@kinde-oss/kinde-auth-nextjs/server";
 
 
@@ -38,112 +38,76 @@ export async function POST(req: Request) {
 
     
     switch (event?.type) {
+
      
         
       case "user.created":
         
          {
-            try{ 
-
-                const user= (event.data.user);
-                console.log("user from kinde",user)
             
-                const userId = `user:${user.id}`;
-    
-                const existingUser = await redis.hgetall(userId);
-
-                console.log("existing user : ",existingUser);
-    
-                if (!existingUser || Object.keys(existingUser).length === 0) {
+                const user= (event.data.user);
                 
-                await redis.hset(userId, {
-                    id: user.id,
-                    email: user.email,
-                    name: user.first_name,
-                    image: user.picture ?? `https://as2.ftcdn.net/v2/jpg/05/89/93/27/1000_F_589932782_vQAEAZhHnq1QCGu5ikwrYaQD0Mmurm0N.webp`  
+                
+
+                await prisma.user.create({
+                    data: {
+                        id: user.id,
+                        email: user.email,
+                        firstName: user.first_name ?? "",
+                        lastName: user.last_name ?? "",
+                        profileImage: user.picture ?? `https://as2.ftcdn.net/v2/jpg/05/89/93/27/1000_F_589932782_vQAEAZhHnq1QCGu5ikwrYaQD0Mmurm0N.webp`  
+                    },
                 });
                 
-                
-                
-    
-                
+
             
-                }
-
-
-
-            }catch(error){
-             console.log(error) 
-            
-
-            }
-  
+              }
           break;
-         }
-         case "user.updated":
 
-         {
-           const user= (event.data.user);
-           const userId = `user:${user.id}`;
-
-           const existingUser = await redis.hgetall(userId);
-
-           if(!existingUser){
-            throw new Error("Db not consist of already user")
-           }
-           if(existingUser){
-            await redis.hset(userId, {
-                id: user.id,
-                email: user.email,
-                name: user.first_name ,
-                image: user.picture ?? `https://as2.ftcdn.net/v2/jpg/05/89/93/27/1000_F_589932782_vQAEAZhHnq1QCGu5ikwrYaQD0Mmurm0N.webp`  
-            });
-           }
-       
-             
-           
-           
-   
-           
-       
-           
-   
-         break;
-        }  
-        
-        case 'user.deleted':
-           
-        {
+          case "user.updated":{
 
             const user= (event.data.user);
-           const userId = `user:${user.id}`;
 
-           const existingUser = await redis.hgetall(userId);
-           console.log("existing user : ",existingUser);
+            await prisma.user.update({
+                where: {
+                    id: user.id
+                },
+                data: {
+                    id: user.id,
+                    email: user.email,
+                    firstName: user.first_name ?? "",
+                    lastName: user.last_name ?? "",
+                    profileImage: user.picture ?? `https://as2.ftcdn.net/v2/jpg/05/89/93/27/1000_F_589932782_vQAEAZhHnq1QCGu5ikwrYaQD0Mmurm0N.webp`  
+                },
+            });
 
-           if(!existingUser){
-            throw new Error("Db not consist of already user")
-           }
-           if(existingUser){
-            
-            await redis.hdel(userId);
-           }    
+          }
 
-           
-        }
-   
-       
+          break;
+          case "user.deleted":{
+            const user= (event.data.user);
+            await prisma.user.delete({
+                where: {
+                    id: user.id
+                },
+            });
+          }
+          break;
+
+          default:
+            throw new Error("Invalid event type");
+         }
+         
           
-      default:
-       
-        break;
+      
     }
 
-  } catch (err) {
+   catch (err) {
     if (err instanceof Error) {
       console.error(err.message);
       return NextResponse.json({ message: err.message }, { status: 400 });
     }
-  }
-  return NextResponse.json({ status: 200, statusText: "success" });
 }
+return NextResponse.json({ status: 200, statusText: "success" });
+}
+  

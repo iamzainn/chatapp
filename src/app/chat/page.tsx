@@ -1,42 +1,118 @@
 import { ChatLayout } from "@/components/chat-layout";
+
+import prisma from "@/lib/db";
+
 import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { USERS, User } from "../../lib/dummy";
-import { redis } from "@/lib/db";
 
-
-async function getUsers(myId:string): Promise<User[]> {
-	const userKeys: string[] = [];
-	let cursor = "0";
-
-	do {
-		const [nextCursor, keys] = await redis.scan(cursor, { match: "user:*", type: "hash", count: 100 });
-		cursor = nextCursor;
-		userKeys.push(...keys);
-	} while (cursor !== "0");
-
-
-	
-
-	const pipeline = redis.pipeline();
-	userKeys.forEach((key) => pipeline.hgetall(key));
-	const results = (await pipeline.exec()) as User[];
-
-	const users: User[] = [];
-	for (const user of results) {
-		// exclude the current user from the list of users in the sidebar
-		if (user.id !== myId) {
-			users.push(user);
+async function getUsers(userId: string) {
+	const users = await prisma.user.findMany({
+		where: {
+			id: {
+				not: userId
+			}
+		},
+		select: {
+			id: true,
+			firstName: true,
+			lastName: true,
+			profileImage: true,
+			email: true
+			
 		}
-	}
-	return users;
+	})
+	return users
 }
+
+
+    
+export async function fetchUserChats(userId: string): Promise<ChatResponse[]> {
+  try {
+    const chats = await prisma.chat.findMany({
+      where: {
+        users: {
+          some: {
+            userId: userId,
+          }
+        }
+      },
+      include: {
+        users: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+                email: true,
+                profileImage: true,
+              }
+            }
+          }
+        },
+        messages: true,
+      }
+    });
+
+    const transformedChats: ChatResponse[] = chats.map(chat => {
+      const isGroupChat = chat.isGroupChat;
+      // console.log("is group chat", isGroupChat)
+      const chatUsers = chat.users.map(userChat => userChat.user);
+      // console.log("chat users", chatUsers);
+      
+      const response: ChatResponse = {
+        id: chat.id,
+        isGroupChat: isGroupChat,
+        createdAt: chat.createdAt,
+        messages: chat.messages.map(message => ({
+          id: message.id,
+          content: message.content,
+          createdAt: message.createdAt,
+          updatedAt: message.updatedAt,
+          senderId: message.senderId,
+          type:message.type,
+          chatId: message.chatId
+
+        }))
+      };
+
+      if (isGroupChat) {
+        response.users = chatUsers;
+      } else {
+        response.user = chatUsers.find(u => u.id !== userId) || undefined
+      }
+
+      return response;
+    });
+    
+    return transformedChats;
+  } catch (error) {
+    console.error('Error fetching user chats:', error);
+    return [];
+  }
+}
+
+
+
+
+
+
+
 
 export const chatPage = async () => {
     const { getUser} = getKindeServerSession(); 
     const user = await getUser();
-    const allUsers = await getUsers(user?.id as string);
+   
+    const data = await fetchUserChats(user?.id as string)
+    // const allUsers = data.map((chat) => !chat.isGroupChat ? chat.user :null).flat() as User[];
+    
+    
+  
+   
+
+    
+    
   
 
 
@@ -56,7 +132,7 @@ export const chatPage = async () => {
   
 
     <div className='z-10 border rounded-lg max-w-5xl w-full min-h-[85vh] text-sm'>
-      <ChatLayout defaultLayout={defaultLayout}navCollapsedSize={8} users={allUsers} />
+      <ChatLayout defaultLayout={defaultLayout}navCollapsedSize={8} chats={data}/>
     </div>
   </main>
   )

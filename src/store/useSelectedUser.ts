@@ -1,4 +1,4 @@
-import { User } from "../lib/dummy";
+
 import { create } from "zustand";
 
 type SelectedUserState = {
@@ -9,4 +9,16 @@ type SelectedUserState = {
 export const useSelectedUser = create<SelectedUserState>((set) => ({
 	selectedUser: null,
 	setSelectedUser: (user: User | null) => set({ selectedUser: user }),
+}));
+
+type SelectedChat = {
+	selectedChat: Chat | null;
+	setSelectedChat: (chat: Chat | null) => void;
+}
+
+
+
+export const useSelectedChat = create<SelectedChat>((set) => ({
+	selectedChat: null,
+	setSelectedChat: (chat: Chat | null) => set({ selectedChat: chat }),
 }));

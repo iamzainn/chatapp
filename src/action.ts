@@ -1,54 +1,68 @@
 "use server";
 
-import { Message } from "../src/lib/dummy";
-import { redis } from "@/lib/db";
-import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
 
-export async function sendMessageAction(formdata:FormData) {
+import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
+import prisma from "./lib/db";
+
+export async function sendMessageAction(message: string, receiverUserId: string, isGroupChat: boolean) {
 	const { getUser } = getKindeServerSession();
 	const user = await getUser();
-
+  
 	if (!user) return { success: false, message: "User not authenticated" };
-
+  
 	const senderId = user.id;
-
-    const receiverId = formdata.get("receiverId") as string;
-    const content = formdata.get("content") as string;
-    const messageType = formdata.get("messageType") as string;
-
-	const conversationId = `conversation:${[senderId, receiverId].sort().join(":")}`;
-
-    
-
-	
-
-	const conversationExists = await redis.exists(conversationId);
-
-	if (!conversationExists) {
-		await redis.hset(conversationId, {
-			participant1: senderId,
-			participant2: receiverId,
-		});
-
-		await redis.sadd(`user:${senderId}:conversations`, conversationId);
-		await redis.sadd(`user:${receiverId}:conversations`, conversationId);
-	}
-
-	// Generate a unique message id
-	const messageId = `message:${Date.now()}:${Math.random().toString(36).substring(2, 9)}`;
-	const timestamp = Date.now();
-
-	// Create the message hash
-	await redis.hset(messageId, {
-		senderId,
-		content,
-		timestamp,
-		messageType,
+  
+	// Check if chat exists
+	let chat = await prisma.chat.findFirst({
+	  where: {
+		isGroupChat: isGroupChat,
+		OR: [
+		  {
+			AND: [
+			  { users: { some: { userId: senderId } } },
+			  { users: { some: { userId: receiverUserId } } }
+			]
+		  },
+		  {
+			AND: [
+			  { users: { some: { userId: receiverUserId } } },
+			  { users: { some: { userId: senderId } } }
+			]
+		  }
+		]
+	  },
+	  include: {
+		users: true
+	  }
 	});
-
-	await redis.zadd(`${conversationId}:messages`, { score: timestamp, member: JSON.stringify(messageId) });
-
+  
+	// If chat doesn't exist, create a new one
+	if (!chat) {
+		chat = await prisma.chat.create({
+		  data: {
+			isGroupChat: isGroupChat,
+			users: {
+			  create: [
+				{ user: { connect: { id: senderId } } },
+				{ user: { connect: { id: receiverUserId } } }
+			  ]
+			}
+		  },
+		  include: {
+			users: true // include users to reflect the changes
+		  }
+		});
+	  }
+  
 	
-
-	return { success: true, conversationId, messageId };
-}
+	const newMessage = await prisma.message.create({
+	  data: {
+		content: message,
+		senderId: senderId,
+		chatId: chat?.id as number
+	  }
+	});
+  	
+  
+	return { success: true, message: "Message sent successfully" };
+  }

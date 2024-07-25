@@ -94,9 +94,3 @@ export interface Message {
     message: string;
 }
 
-export interface User {
-    id: number;
-    avatar: string;
-    messages: Message[];
-    name: string;
-}

@@ -7,9 +7,11 @@ export interface Message {
 
 export interface User {
 	id: string;
-	name: string;
+	firstName: string;
 	email: string;
-	image: string;
+	lastName:string,
+	profileImage: string;
+
 }
 
 export const USERS = [
