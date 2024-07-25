@@ -6,24 +6,7 @@ import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
-async function getUsers(userId: string) {
-	const users = await prisma.user.findMany({
-		where: {
-			id: {
-				not: userId
-			}
-		},
-		select: {
-			id: true,
-			firstName: true,
-			lastName: true,
-			profileImage: true,
-			email: true
-			
-		}
-	})
-	return users
-}
+
 
 
     
