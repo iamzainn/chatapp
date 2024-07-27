@@ -45,7 +45,7 @@ export default function RootLayout({
             <Navbar></Navbar>
             {children} 
             </TanStackProvider>
-          </ThemeProvider>
+            </ThemeProvider>
 
         </body>
     </html>

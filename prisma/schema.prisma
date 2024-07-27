@@ -8,6 +8,8 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
+
+
 model User {
   id           String    @id @unique
   email        String    @unique
@@ -18,8 +20,9 @@ model User {
   updatedAt    DateTime  @updatedAt
   chats        UserChat[]
   messages     Message[]
+  groups       GroupUser[]
 
-  
+  Group Group[]
 }
 
 model Chat {
@@ -27,10 +30,10 @@ model Chat {
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
   isGroupChat   Boolean     @default(false)
-  groupAdminId  String?     
   users         UserChat[]
-  messages      Message[]   @relation("ChatMessages")
-  
+  messages      Message[]   // One-to-many relationship: messages can be zero or more
+  groupId       Int?        
+  group         Group?      @relation(fields: [groupId], references: [id])
 }
 
 model Message {
@@ -42,21 +45,43 @@ model Message {
   type      MessageType
   sender    User     @relation(fields: [senderId], references: [id])
   chatId    Int
-  chat      Chat     @relation("ChatMessages", fields: [chatId], references: [id])
+  chat      Chat     @relation(fields: [chatId], references: [id]) // Specifies the relation details here
 
- 
+  Group Group[]
 }
 
-model UserChat {
+ model UserChat {
   userId String
   chatId Int
-
   user User @relation(fields: [userId], references: [id])
   chat Chat @relation(fields: [chatId], references: [id])
-
   @@id([userId, chatId])
 }
 
+model Group {
+  id          Int           @id @default(autoincrement())
+  name        String
+  image       String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  users       GroupUser[]
+  chats       Chat[]        // Chats related to the group
+  messages    Message[]     // Messages related to the group (messages must belong to a chat)
+
+  
+  groupAdminId String?
+  groupAdmin   User?        @relation(fields: [groupAdminId], references: [id])
+}
+
+model GroupUser {
+  userId  String
+  groupId Int
+
+  user  User  @relation(fields: [userId], references: [id])
+  group Group @relation(fields: [groupId], references: [id])
+
+  @@id([userId, groupId])
+}
 
 enum MessageType {
   text

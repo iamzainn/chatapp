@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import jwksClient from "jwks-rsa";
 import jwt from "jsonwebtoken";
-import prisma, { redis } from "@/lib/db";
+import prisma from "@/lib/db";
 import { ifError } from "assert";
 
 // import {getKindeServerSession} from "@kinde-oss/kinde-auth-nextjs/server";

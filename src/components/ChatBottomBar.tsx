@@ -13,8 +13,9 @@ import { useKindeBrowserClient } from "@kinde-oss/kinde-auth-nextjs";
 
 import { useFormStatus } from "react-dom";
 import { Input } from "./ui/input";
-import { useSelectedUser } from "@/store/useSelectedUser";
+
 import { sendMessageAction } from "@/action";
+import { useSelectedChat } from "@/store/useSelectedUser";
 
 
 const ChatBottomBar = () => {
@@ -23,8 +24,9 @@ const ChatBottomBar = () => {
 	
 	const [isGroupChat, setIsGroupChat] = useState(false);
 	const [isloading, setIsLoading] = useState(false);
+	const {selectedChat} = useSelectedChat();
 
-	const { selectedUser } = useSelectedUser();
+	
 	
 	
     
@@ -55,7 +57,7 @@ const ChatBottomBar = () => {
 	const handleKeyDown = async (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
 		if (e.key === "Enter" && !e.shiftKey) {
 			e.preventDefault();
-			await handleSendMessage(message,selectedUser?.id as string,isGroupChat)
+			await handleSendMessage(message,selectedChat?.user?.id as string,isGroupChat)
 			setMessage("");
 		}
 
@@ -151,7 +153,7 @@ const ChatBottomBar = () => {
                     <Button
 					   disabled={isloading}
 					   onClick={async ()=>{
-						   await handleSendMessage(message,selectedUser?.id as string,isGroupChat)
+						   await handleSendMessage(message,selectedChat?.user?.id as string,isGroupChat)
 					   }}
 					   type="submit"
 						className='h-9 w-9 dark:bg-muted dark:text-muted-foreground dark:hover:bg-muted dark:hover:text-white shrink-0'
@@ -179,7 +181,7 @@ const ChatBottomBar = () => {
 								size={20}
 								className='text-muted-foreground'
 								onClick={() => {
-								    handleSendMessage("👍",selectedUser?.id as string,isGroupChat)
+								    handleSendMessage("👍",selectedChat?.user?.id as string,isGroupChat)
 								}}
 							/>
 						)}

@@ -1,8 +1,9 @@
 
 
-import ChatTopBar from "./ChatTopBar";
+
 import MessageList from "./MessageList";
 import ChatBottomBar from "./ChatBottomBar";
+import ChatTopBar from "./ChatTopBar";
 
 
 const MessageContainer = () => {

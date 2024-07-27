@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, m, motion } from "framer-motion";
 import { Avatar, AvatarImage } from "../components/ui/avatar";
 import { useSelectedChat } from "../store/useSelectedUser";
 import { useKindeBrowserClient } from "@kinde-oss/kinde-auth-nextjs";
@@ -38,7 +38,8 @@ const MessageList = () => {
 								layout: {
 									type: "spring",
 									bounce: 0.3,
-									duration: selectedChat?.messages.indexOf(message) * 0.05 + 0.2,
+									duration: selectedChat.messages ? selectedChat?.messages?.indexOf(message) * 0.05 + 0.2:0
+									
 								},
 							}}
 							style={{

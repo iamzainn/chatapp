@@ -10,8 +10,8 @@ import {
 import { cn } from "@/lib/utils";
 import Sidebar from "./Sidebar";
 import MessageContainer from "./MessageContainer";
-import { useSelectedChat, useSelectedUser } from "@/store/useSelectedUser";
-import { User } from "@/lib/dummy";
+import { useSelectedChat } from "@/store/useSelectedUser";
+
 
 
 
@@ -19,7 +19,9 @@ interface ChatLayoutProps {
   defaultLayout: number[] | undefined;
   defaultCollapsed?: boolean;
   navCollapsedSize: number;
-  chats: ChatResponse[];
+  chats: Chat[]
+  users:User[]
+  groups:Group[]
 }
 
 export function ChatLayout({
@@ -27,11 +29,13 @@ export function ChatLayout({
   defaultCollapsed = true,
   navCollapsedSize,
   chats,
+  users,
+  groups
 }: ChatLayoutProps) {
   const [isCollapsed, setIsCollapsed] = React.useState(defaultCollapsed);
 
   const [isMobile, setIsMobile] = useState(false);
-   const {selectedChat,setSelectedChat} =useSelectedChat();
+   const {selectedChat} =useSelectedChat();
 
   
 
@@ -88,7 +92,7 @@ export function ChatLayout({
           isCollapsed && "min-w-[50px] md:min-w-[70px] transition-all duration-300 ease-in-out"
         )}
       >
-        <Sidebar isCollapsed={isCollapsed} chats={chats} />
+        <Sidebar isCollapsed={isCollapsed} chats={chats} users={users} groups={groups} />
       </ResizablePanel>
       <ResizableHandle withHandle />
       <ResizablePanel defaultSize={defaultLayout[1]} minSize={30}>
