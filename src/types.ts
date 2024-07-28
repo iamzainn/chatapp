@@ -41,3 +41,8 @@ type ChatResponse = {
   groups?: Group[];
   chats?: Chat[];
 };
+
+type SignedURLResponse = Promise<
+  { failure?: undefined; success: { url: string } }
+  | { failure: string; success?: undefined }
+>

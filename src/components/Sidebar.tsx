@@ -4,7 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Button } from "./ui/button";
 import { cn } from "@/lib/utils";
 import { LogOut } from "lucide-react";
-import useSound from "use-sound";
+// import useSound from "use-sound";
 import { usePreferences } from "@/store/usePreferences";
 import { LogoutLink } from "@kinde-oss/kinde-auth-nextjs/components";
 import { useSelectedChat } from "@/store/useSelectedUser";
@@ -20,7 +20,7 @@ interface SidebarProps {
 
 const Sidebar = ({ isCollapsed, chats, users, groups }: SidebarProps) => {
 	// const [playClickSound] = useSound("/sounds/mouse-click.mp3");
-	const { soundEnabled } = usePreferences();
+	// const { soundEnabled } = usePreferences();
 	const { selectedChat, setSelectedChat } = useSelectedChat();
 	const { user } = useKindeBrowserClient();
 

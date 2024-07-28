@@ -1,7 +1,7 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Info, X, Users } from "lucide-react";
+import {  X, Users } from "lucide-react";
 import { useSelectedChat } from "@/store/useSelectedUser";
 import { useKindeBrowserClient } from "@kinde-oss/kinde-auth-nextjs";
 import { fetchGroupDetails, leaveGroup } from '@/action';

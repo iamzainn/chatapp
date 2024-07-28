@@ -13,7 +13,7 @@ const MessageList = () => {
 	const {selectedChat}=useSelectedChat();
 
     
-	const { user: currentUser, isLoading: isUserLoading } = useKindeBrowserClient();
+	const { user: currentUser } = useKindeBrowserClient();
     
 	const messageContainerRef = useRef<HTMLDivElement>(null);
 
@@ -67,7 +67,7 @@ const MessageList = () => {
 									<><img
 											src={message.content}
 											alt='Message Image'
-											className='border p-2 rounded h-40 md:h-52 object-cover' /><span className='bg-accent p-3 rounded-md max-w-xs'>{message.content}</span></>
+											className='border p-2 rounded h-40 md:h-52 object-cover' /></>
 								)}
 
                                 

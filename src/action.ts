@@ -4,6 +4,94 @@
 import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
 import prisma from "./lib/db";
 import { revalidatePath } from "next/cache";
+import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3"
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner"
+import crypto from "crypto"
+import { MessageType } from "@prisma/client";
+
+
+const s3Client = new S3Client({
+	region: process.env.AWS_BUCKET_REGION!,
+	credentials: {
+	  accessKeyId: process.env.AWS_ACCESS_KEY!,
+	  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+	},
+  })
+  const maxFileSize = 1048576 * 10 // 1 MB
+
+  const allowedFileTypes = [
+	"image/jpeg",
+	"image/png",
+	"video/mp4",
+	"video/quicktime",
+	"image/webp"
+  ]
+
+  type GetSignedURLParams = {
+	fileType: string
+	fileSize: number
+	checksum: string
+  }
+
+
+  export async function getSignedURL({
+	fileType,
+	fileSize,
+	checksum,
+  }: GetSignedURLParams) {
+	const { getUser } = getKindeServerSession();
+	const user = await getUser();
+  
+	
+	if(!user){
+		return {
+			failure:"un authorized"
+		}
+	}
+  
+	// first just make sure in our code that we're only allowing the file types we want
+	if (!allowedFileTypes.includes(fileType)) {
+	  return { failure: "File type not allowed" }
+	}
+  
+	if (fileSize > maxFileSize) {
+	  return { failure: "File size too large" }
+	}
+	
+const generateFileName = (bytes = 32) => crypto.randomBytes(bytes).toString("hex")
+
+  
+	const putObjectCommand = new PutObjectCommand({
+	  Bucket: process.env.AWS_BUCKET_NAME!,
+	  Key: generateFileName(),
+	  ContentType: fileType,
+	  ContentLength: fileSize,
+	  ChecksumSHA256: checksum,
+	  // Let's also add some metadata which is stored in s3.
+	  Metadata: {
+		userId: user.id
+	  },
+
+
+	  
+
+
+	}
+
+
+  )
+
+  const url = await getSignedUrl(
+	s3Client,
+	putObjectCommand,
+	{ expiresIn: 60 } 
+  )
+
+  return {success: {url}}
+}
+
+
+    
 
 
 export async function fetchData(userId: string): Promise<ChatResponse> {
@@ -159,69 +247,100 @@ export async function fetchData(userId: string): Promise<ChatResponse> {
   }
   
 
-export async function sendMessageAction(message: string, receiverUserId: string, isGroupChat: boolean) {
+export async function sendMessageAction( chatId:number, isGroupChat: boolean,hasAnyfile:boolean,message?: string,receiverUserId?: string,fileUrl?:string,fileType?:string) {
 	const { getUser } = getKindeServerSession();
-	const user = await getUser();
-  
+   	const user = await getUser();
+
 	if (!user) return { success: false, message: "User not authenticated" };
-  
-	const senderId = user.id;
-  
+
+	 
+
 	
-	let chat = await prisma.chat.findFirst({
-	  where: {
-		isGroupChat: isGroupChat,
-		OR: [
-		  {
-			AND: [
-			  { users: { some: { userId: senderId } } },
-			  { users: { some: { userId: receiverUserId } } }
-			]
-		  },
-		  {
-			AND: [
-			  { users: { some: { userId: receiverUserId } } },
-			  { users: { some: { userId: senderId } } }
-			]
-		  }
-		]
-	  },
-	  include: {
-		users: true
-	  }
-	});
-  
-	// If chat doesn't exist, create a new one
-	if (!chat) {
-		chat = await prisma.chat.create({
-		  data: {
-			isGroupChat: isGroupChat,
-			users: {
-			  create: [
-				{ user: { connect: { id: senderId } } },
-				{ user: { connect: { id: receiverUserId } } }
+	
+	const senderId = user.id;
+	let chat;
+
+    
+
+
+
+	if(isGroupChat){
+     chat = await prisma.chat.findFirst({
+		where: {
+			isGroupChat:isGroupChat,
+			id:chatId
+		}
+	 })
+	}
+
+	 else{ 
+	 chat = await prisma.chat.findFirst({
+		where: {
+		  isGroupChat: isGroupChat,
+		  id:chatId,
+		  OR: [
+			{
+			  AND: [
+				{ users: { some: { userId: senderId } } },
+				{ users: { some: { userId: receiverUserId } } }
+			  ]
+			},
+			{
+			  AND: [
+				{ users: { some: { userId: receiverUserId } } },
+				{ users: { some: { userId: senderId } } }
 			  ]
 			}
-		  },
-		  include: {
-			users: true // include users to reflect the changes
-		  }
-		});
-	  }
+		  ]
+		},
+		include: {
+		  users: true
+		}
+	  });
+	 }
   
 	
-	const newMessage = await prisma.message.create({
-	  data: {
-		content: message,
-		senderId: senderId,
-		chatId: chat?.id as number,
-		type: "text"
+
+	if(!chat){
+		throw new Error("chat not exist it is unpossible to send messages")
+	}
+
+	console.log("chat exist ",{
+		chat
+	})
+	  let fType = hasAnyfile ? fileType:"text"
+      const messagetype= fType?.includes("video")? "video" : "image";
+	  console.log(messagetype);
+
+	  if(hasAnyfile){
+		const newMessage = await prisma.message.create({
+			data:{
+				content:fileUrl!,
+				senderId:senderId,
+				chatId:chat.id,
+				type:messagetype
+			}
+		})
 	  }
-	});
-  	
-  
-	return { success: true, message: "Message sent successfully" };
-  }
+	  if(message){
+		const newMessage = await prisma.message.create({
+			data:{
+				content:message!,
+				senderId:senderId,
+				chatId:chat.id,
+				type:"text"
+			}
+		})
+	  }
+
+
+	
+	
+		
+		  return { success: true, message: "Message sent successfully" };
+	  
+	}
+	  
 
   export async function getOrCreateChat( receiverId: string) {
 	const { getUser } = getKindeServerSession();
