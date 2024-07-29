@@ -7,9 +7,11 @@ import prisma from "@/lib/db";
 import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { unstable_noStore as noStore } from "next/cache";
+
 
 async function getallusers (myId:string){
-
+    
   const allUsers = await prisma.user.findMany({
     select:{
         id:true,
@@ -37,6 +39,7 @@ async function getallusers (myId:string){
 
 
 export const chatPage = async () => {
+  noStore();
     const { getUser} = getKindeServerSession(); 
     const user = await getUser();
     const data = await fetchData(user?.id as string)
