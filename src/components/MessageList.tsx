@@ -3,19 +3,47 @@ import { AnimatePresence, m, motion } from "framer-motion";
 import { Avatar, AvatarImage } from "../components/ui/avatar";
 import { useSelectedChat } from "../store/useSelectedUser";
 import { useKindeBrowserClient } from "@kinde-oss/kinde-auth-nextjs";
+import { pusherClient } from '@/lib/pusher-client';
 
-import {  useRef } from "react";
+import {  useEffect, useRef } from "react";
+
+type ExtendedChat = Chat & { messages?: Message[] };
 
 
 
 const MessageList = () => {
 
-	const {selectedChat}=useSelectedChat();
+	const {selectedChat, addMessage }=useSelectedChat();
 
     
 	const { user: currentUser } = useKindeBrowserClient();
     
 	const messageContainerRef = useRef<HTMLDivElement>(null);
+    const lastMessageRef = useRef<HTMLDivElement>(null)
+
+	useEffect(() => {
+		if (selectedChat) {
+		  const channel = pusherClient.subscribe(`chat-${selectedChat.id}`);
+		  channel.bind('new-message', (newMessage: Message) => {
+			// Check if the message already exists in the chat
+			const messageExists = (selectedChat as ExtendedChat).messages?.some(m => m.id === newMessage.id);
+			if (!messageExists) {
+			  addMessage(newMessage);
+			}
+		  });
+	
+		  return () => {
+			pusherClient.unsubscribe(`chat-${selectedChat.id}`);
+		  };
+		}
+	  }, [selectedChat, addMessage]);
+
+
+	useEffect(() => {
+        if (lastMessageRef.current) {
+            lastMessageRef.current.scrollIntoView({ behavior: "smooth" });
+        }
+    }, [selectedChat?.messages]);
 
 	
 	
@@ -25,32 +53,31 @@ const MessageList = () => {
 		<div ref={messageContainerRef} className='w-full overflow-y-auto overflow-x-hidden h-full flex flex-col'>
 			
 			<AnimatePresence>
-				{
-					selectedChat?.messages?.map((message, index) => (
-						<motion.div
-							key={index}
-							layout
-							initial={{ opacity: 0, scale: 1, y: 50, x: 0 }}
-							animate={{ opacity: 1, scale: 1, y: 0, x: 0 }}
-							exit={{ opacity: 0, scale: 1, y: 1, x: 0 }}
-							transition={{
-								opacity: { duration: 0.1 },
-								layout: {
-									type: "spring",
-									bounce: 0.3,
-									duration: selectedChat.messages ? selectedChat?.messages?.indexOf(message) * 0.05 + 0.2:0
-									
-								},
-							}}
-							style={{
-								originX: 0.5,
-								originY: 0.5,
-							}}
-							className={cn(
-								"flex flex-col gap-2 p-4 whitespace-pre-wrap",
-								message.senderId === currentUser?.id ? "items-end" : "items-start"
-							)}
-						>
+			{selectedChat?.messages?.map((message, index) => (
+                    <motion.div
+                        key={index}
+                        ref={index === selectedChat.messages?.length || 0  - 1 ? lastMessageRef : null}
+                        layout
+                        initial={{ opacity: 0, scale: 1, y: 50, x: 0 }}
+                        animate={{ opacity: 1, scale: 1, y: 0, x: 0 }}
+                        exit={{ opacity: 0, scale: 1, y: 1, x: 0 }}
+                        transition={{
+                            opacity: { duration: 0.1 },
+                            layout: {
+                                type: "spring",
+                                bounce: 0.3,
+                                duration: selectedChat.messages ? selectedChat.messages.indexOf(message) * 0.05 + 0.2 : 0
+                            },
+                        }}
+                        style={{
+                            originX: 0.5,
+                            originY: 0.5,
+                        }}
+                        className={cn(
+                            "flex flex-col gap-2 p-4 whitespace-pre-wrap",
+                            message.senderId === currentUser?.id ? "items-end" : "items-start"
+                        )}
+                    >
 							<div className='flex gap-3 items-center'>
 								{message.senderId === selectedChat?.user?.id && (
 									<Avatar className='flex justify-center items-center'>

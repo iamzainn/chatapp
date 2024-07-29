@@ -1,13 +1,23 @@
+import { create } from 'zustand';
 
-import { create } from "zustand";
 
+type ExtendedChat = Chat & { messages?: Message[] };
 
-type SelectedChat = {
-	selectedChat: Chat  | null;
-	setSelectedChat: (chat: Chat  | null) => void;
+interface SelectedChatState {
+  selectedChat: ExtendedChat | null;
+  setSelectedChat: (chat: ExtendedChat | null) => void;
+  addMessage: (message: Message) => void;
 }
 
-export const useSelectedChat = create<SelectedChat>((set) => ({
-	selectedChat: null,
-	setSelectedChat: (chat: Chat | null) => set({ selectedChat: chat }),
+export const useSelectedChat = create<SelectedChatState>((set) => ({
+  selectedChat: null,
+  setSelectedChat: (chat) => set({ selectedChat: chat }),
+  addMessage: (message) => set((state) => ({
+    selectedChat: state.selectedChat
+      ? {
+          ...state.selectedChat,
+          messages: [...(state.selectedChat.messages || []), message],
+        }
+      : null,
+  })),
 }));

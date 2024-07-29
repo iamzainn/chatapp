@@ -8,6 +8,19 @@ import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3"
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner"
 import crypto from "crypto"
 import { MessageType } from "@prisma/client";
+import { pusher } from '@/lib/pusher';
+
+function cleanS3Url(url:string) {
+	try {
+	  const urlObject = new URL(url);
+	  const pathParts = urlObject.pathname.split('/');
+	  const filename = pathParts[pathParts.length - 1];
+	  return `${urlObject.origin}/${filename}`;
+	} catch (error) {
+	  console.error('Invalid URL:', error);
+	  return null;
+	}
+  }
 
 
 const s3Client = new S3Client({
@@ -247,99 +260,78 @@ export async function fetchData(userId: string): Promise<ChatResponse> {
   }
   
 
-export async function sendMessageAction( chatId:number, isGroupChat: boolean,hasAnyfile:boolean,message?: string,receiverUserId?: string,fileUrl?:string,fileType?:string) {
+  export async function sendMessageAction(
+	chatId: number,
+	isGroupChat: boolean,
+	hasAnyFile: boolean,
+	message?: string,
+	receiverUserId?: string,
+	fileUrl?: string,
+	fileType?: string
+  ): Promise<SendMessageResult> {
 	const { getUser } = getKindeServerSession();
-   	const user = await getUser();
-
-	if (!user) return { success: false, message: "User not authenticated" };
-
-	 
-
-	
-	
-	const senderId = user.id;
-	let chat;
-
-    
-
-
-
-	if(isGroupChat){
-     chat = await prisma.chat.findFirst({
-		where: {
-			isGroupChat:isGroupChat,
-			id:chatId
-		}
-	 })
-	}
-
-	 else{ 
-	 chat = await prisma.chat.findFirst({
-		where: {
-		  isGroupChat: isGroupChat,
-		  id:chatId,
-		  OR: [
-			{
-			  AND: [
-				{ users: { some: { userId: senderId } } },
-				{ users: { some: { userId: receiverUserId } } }
-			  ]
-			},
-			{
-			  AND: [
-				{ users: { some: { userId: receiverUserId } } },
-				{ users: { some: { userId: senderId } } }
-			  ]
-			}
-		  ]
-		},
-		include: {
-		  users: true
-		}
-	  });
-	 }
+	const user = await getUser();
   
-	
-
-	if(!chat){
-		throw new Error("chat not exist it is unpossible to send messages")
+	if (!user) {
+	  throw new Error("User not authenticated");
 	}
-
-	console.log("chat exist ",{
-		chat
-	})
-	  let fType = hasAnyfile ? fileType:"text"
-      const messagetype= fType?.includes("video")? "video" : "image";
-	  console.log(messagetype);
-
-	  if(hasAnyfile){
-		const newMessage = await prisma.message.create({
-			data:{
-				content:fileUrl!,
-				senderId:senderId,
-				chatId:chat.id,
-				type:messagetype
-			}
-		})
-	  }
-	  if(message){
-		const newMessage = await prisma.message.create({
-			data:{
-				content:message!,
-				senderId:senderId,
-				chatId:chat.id,
-				type:"text"
-			}
-		})
-	  }
-
-
-	
-	
-		
-		  return { success: true, message: "Message sent successfully" };
-	  
+  
+	const senderId = user.id;
+  
+	// Find the chat
+	const chat = await prisma.chat.findFirst({
+	  where: {
+		id: chatId,
+		isGroupChat,
+		users: {
+		  some: {
+			userId: senderId,
+		  },
+		},
+	  },
+	});
+  
+	if (!chat) {
+	  throw new Error("Chat not found");
 	}
+  
+	// Prepare message data
+	const messageData = [];
+  
+	if (hasAnyFile && fileUrl) {
+	  const cleanedUrl = cleanS3Url(fileUrl);
+	  const fileMessageType: MessageType = fileType?.includes("video") ? MessageType.video : MessageType.image;
+	  messageData.push({
+		content: cleanedUrl,
+		senderId,
+		chatId: chat.id,
+		type: fileMessageType,
+	  });
+	}
+  
+	if (message) {
+	  messageData.push({
+		content: message,
+		senderId,
+		chatId: chat.id,
+		type: MessageType.text,
+	  });
+	}
+  
+	// Create messages in a single transaction
+	let createdMessages: Message[] = [];
+  if (messageData.length > 0) {
+    createdMessages = await prisma.$transaction(
+      messageData.map((data) => prisma.message.create({ data }))
+    );
+
+    createdMessages.forEach((message) => {
+      pusher.trigger(`chat-${chatId}`, 'new-message', message);
+    });
+  }
+
+  return { success: true, messages: createdMessages };
+  }
 	  
 
   export async function getOrCreateChat( receiverId: string) {

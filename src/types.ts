@@ -46,3 +46,9 @@ type SignedURLResponse = Promise<
   { failure?: undefined; success: { url: string } }
   | { failure: string; success?: undefined }
 >
+
+
+type SendMessageResult = {
+  success: boolean;
+  messages: Message[];
+};
