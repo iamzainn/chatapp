@@ -329,7 +329,7 @@ export async function fetchData(userId: string): Promise<ChatResponse> {
       pusher.trigger(`chat-${chatId}`, 'new-message', message);
     });
   }
-
+  revalidatePath("/chat");
   return { success: true, messages: createdMessages };
   }
 	  

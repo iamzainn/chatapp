@@ -23,9 +23,7 @@ async function getallusers (myId:string){
     }
   })
   
-
   return allUsers.filter(user=>user.id!==myId);
-
 }
 
 
@@ -43,7 +41,7 @@ export const chatPage = async () => {
     const { getUser} = getKindeServerSession(); 
     const user = await getUser();
     const data = await fetchData(user?.id as string)
-    // console.log(JSON.stringify(data,null,2));
+    
     const Users = await getallusers(user?.id as string);
 
     if(!user){
