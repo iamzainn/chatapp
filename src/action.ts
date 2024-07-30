@@ -211,6 +211,12 @@ export async function fetchInitialData(userId: string): Promise<ChatResponse> {
 		  updatedAt: group.updatedAt,
 		  groupAdminId: group.groupAdminId,
 		  numberOfMembers: group.users.length,
+		  chat: {
+			id: group.chats[0]?.id,
+			createdAt: group.chats[0]?.createdAt,
+			updatedAt: group.chats[0]?.updatedAt,
+			isGroupChat: group.chats[0]?.isGroupChat,
+		  },
 		  lastMessage: lastMessage ? {
 			content: lastMessage.content,
 			createdAt: lastMessage.createdAt,

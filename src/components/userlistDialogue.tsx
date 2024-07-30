@@ -10,7 +10,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { ImageIcon, MessageSquareDiff, UserPlus, Search, User } from "lucide-react";
+import { ImageIcon, MessageSquareDiff, UserPlus, Search, User, MessageCircle } from "lucide-react";
 import { Input } from "./ui/input";
 import { Button } from "./ui/button";
 import { getOrCreateChat, getOrCreateGroup } from "@/action";
@@ -89,8 +89,7 @@ export const UserListDialog = ({ users }: { users: User[] }) => {
     <Dialog>
       <DialogTrigger>
         <Button variant="outline" className="gap-2">
-          <MessageSquareDiff size={20} />
-          New Chat
+        <MessageCircle size={20} />
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
