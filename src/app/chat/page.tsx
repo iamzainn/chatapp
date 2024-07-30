@@ -1,5 +1,5 @@
 
-import { fetchData } from "@/action";
+import { fetchInitialData } from "@/action";
 import { ChatLayout } from "@/components/chat-layout";
 
 import prisma from "@/lib/db";
@@ -40,7 +40,8 @@ export const chatPage = async () => {
   noStore();
     const { getUser} = getKindeServerSession(); 
     const user = await getUser();
-    const data = await fetchData(user?.id as string)
+    const data = await fetchInitialData(user?.id as string)
+    console.log(JSON.stringify(data,null,2));
     
     const Users = await getallusers(user?.id as string);
 

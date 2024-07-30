@@ -107,157 +107,162 @@ const generateFileName = (bytes = 32) => crypto.randomBytes(bytes).toString("hex
     
 
 
-export async function fetchData(userId: string): Promise<ChatResponse> {
+export async function fetchInitialData(userId: string): Promise<ChatResponse> {
 	try {
-		// Fetch all non-group chats where the user is a participant
-		const chats = await prisma.chat.findMany({
-		  where: {
-			isGroupChat: false,
-			users: {
-			  some: {
-				userId: userId,
-			  }
+	  // Fetch non-group chats
+	  const chats = await prisma.chat.findMany({
+		where: {
+		  isGroupChat: false,
+		  users: {
+			some: {
+			  userId: userId,
 			}
-		  },
-		  include: {
-			users: {
-			  include: {
-				user: {
-				  select: {
-					id: true,
-					firstName: true,
-					lastName: true,
-					email: true,
-					profileImage: true,
-				  }
-				}
-			  }
-			},
-			messages: true
 		  }
-		});
-	
-		// Fetch all groups where the user is a member
-		const groups = await prisma.group.findMany({
-		  where: {
-			users: {
-			  some: {
-				userId: userId,
+		},
+		include: {
+		  users: {
+			include: {
+			  user: {
+				select: {
+				  id: true,
+				  firstName: true,
+				  lastName: true,
+				  email: true,
+				  profileImage: true,
+				}
 			  }
 			}
 		  },
-		  include: {
-			users: {
-			  select: {
-				user: {
-				  select: {
-					id: true,
-					firstName: true,
-					lastName: true,
-					email: true,
-					profileImage: true,
-				  }
-				}
-			  }
+		  messages: {
+			orderBy: {
+			  createdAt: 'desc'
 			},
-			groupAdmin: {
-			  select: {
-				id: true,
-				firstName: true,
-				lastName: true,
-				email: true,
-				profileImage: true,
-			  }
-			},
-			chats: {
-			  include: {
-				messages: true,
-				users: {
-				  include: {
-					user: {
-					  select: {
-						id: true,
-						firstName: true,
-						lastName: true,
-						email: true,
-						profileImage: true,
-					  }
-					}
-				  }
+			take: 1,
+			select: {
+			  content: true,
+			  createdAt: true,
+			  senderId: true,
+			}
+		  }
+		}
+	  });
+  
+	  // Fetch groups
+	  const groups = await prisma.group.findMany({
+		where: {
+		  users: {
+			some: {
+			  userId: userId,
+			}
+		  }
+		},
+		include: {
+		  users: {
+			select: {
+			  userId: true,
+			}
+		  },
+		  chats: {
+			include: {
+			  messages: {
+				orderBy: {
+				  createdAt: 'desc'
+				},
+				take: 1,
+				select: {
+				  content: true,
+				  createdAt: true,
+				  senderId: true,
 				}
 			  }
 			}
 		  }
-		});
-	
-		// Transform non-group chats
-		const transformedChats: Chat[] = chats.map(chat => {
-		  const chatUsers = chat.users.map(userChat => userChat.user);
-		  const otherUser = chatUsers.find(u => u.id !== userId);
-	
-		  return {
-			id: chat.id,
-			isGroupChat: chat.isGroupChat,
-			createdAt: chat.createdAt,
-			updateAt: chat.updatedAt,
-			messages: chat.messages.map(message => ({
-			  id: message.id,
-			  content: message.content,
-			  createdAt: message.createdAt,
-			  updatedAt: message.updatedAt,
-			  senderId: message.senderId,
-			  type: message.type,
-			  chatId: message.chatId
-			})),
-			user: otherUser
-		  };
-		});
-	
-		const transformedGroups: Group[] = groups.map(group => {
-		  const groupChat = group.chats[0]; // Assuming one chat per group for simplicity
-	
-		  return {
-			id: group.id,
-			name: group.name,
-			image: group.image as string,
-			createdAt: group.createdAt,
-			updatedAt: group.updatedAt,
-			groupAdminId: group.groupAdminId,
-			numberOfMembers: group.users.length,
-			chat: groupChat
-			  ? {
-				  id: groupChat.id,
-				  isGroupChat: groupChat.isGroupChat,
-				  createdAt: groupChat.createdAt,
-				  updateAt: groupChat.updatedAt,
-				  messages: groupChat.messages.map(message => ({
-					id: message.id,
-					content: message.content,
-					createdAt: message.createdAt,
-					updatedAt: message.updatedAt,
-					senderId: message.senderId,
-					type: message.type,
-					chatId: message.chatId
-				  })),
-				  users: groupChat.users.map(userChat => userChat.user)
-				}
-			  : undefined
-		  };
-		});
-	
+		}
+	  });
+  
+	  // Transform non-group chats
+	  const transformedChats: Chat[] = chats.map(chat => {
+		const otherUser = chat.users.find(userChat => userChat.user.id !== userId)?.user;
+		const lastMessage = chat.messages[0];
+  
 		return {
-		  groups: transformedGroups,
-		  chats: transformedChats
+		  id: chat.id,
+		  isGroupChat: chat.isGroupChat,
+		  createdAt: chat.createdAt,
+		  updatedAt: chat.updatedAt,
+		  user: otherUser,
+		  lastMessage: lastMessage ? {
+			content: lastMessage.content,
+			createdAt: lastMessage.createdAt,
+			senderId: lastMessage.senderId,
+		  } : undefined
 		};
-	
-	  } catch (error) {
-		console.error('Error fetching user data:', error);
+	  });
+  
+	  // Transform groups
+	  const transformedGroups: Group[] = groups.map(group => {
+		const lastMessage = group.chats[0]?.messages[0];
+  
 		return {
-		  groups: [],
-		  chats: []
+		  id: group.id,
+		  name: group.name,
+		  image: group.image as string,
+		  createdAt: group.createdAt,
+		  updatedAt: group.updatedAt,
+		  groupAdminId: group.groupAdminId,
+		  numberOfMembers: group.users.length,
+		  lastMessage: lastMessage ? {
+			content: lastMessage.content,
+			createdAt: lastMessage.createdAt,
+			senderId: lastMessage.senderId,
+		  } : undefined
 		};
-	  }
+	  });
+  
+	  return {
+		groups: transformedGroups,
+		chats: transformedChats
+	  };
+  
+	} catch (error) {
+	  console.error('Error fetching initial user data:', error);
+	  return {
+		groups: [],
+		chats: []
+	  };
+	}
   }
+
+  export async function fetchChatMessages(chatId: number): Promise<Message[]> {
+	try {
+	  const messages = await prisma.message.findMany({
+		where: {
+		  chatId: chatId
+		},
+		orderBy: {
+		  createdAt: 'asc'
+		},
+		select: {
+		  id: true,
+		  content: true,
+		  createdAt: true,
+		  updatedAt: true,
+		  senderId: true,
+		  chatId: true,
+		  type: true
+		}
+	  });
+  
+	  return messages.map(message => ({
+		...message,
+		type: message.type as 'text' | 'image' | 'video'
+	  }));
+	} catch (error) {
+	  console.error('Error fetching chat messages:', error);
+	  return [];
+	}
+  }
+
   
 
   export async function sendMessageAction(
@@ -322,7 +327,7 @@ export async function fetchData(userId: string): Promise<ChatResponse> {
 	let createdMessages: Message[] = [];
   if (messageData.length > 0) {
     createdMessages = await prisma.$transaction(
-      messageData.map((data) => prisma.message.create({ data }))
+      messageData.map((data) => prisma.message.create({ data  }))
     );
 
     createdMessages.forEach((message) => {

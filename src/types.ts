@@ -16,31 +16,40 @@ type Message = {
   type: 'text' | 'image' | 'video';
 };
 
+type Chat = {
+  id: number;
+  isGroupChat: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+  user?: User; // for non-group chats
+  lastMessage?: {
+    content: string;
+    createdAt: Date;
+    senderId: string;
+  };
+};
+
 type Group = {
   id: number;
   name: string;
   image: string;
   createdAt: Date;
   updatedAt: Date;
-  chat?: Chat; // specific to this group
   groupAdminId: string | null;
   numberOfMembers: number;
-};
-
-type Chat = {
-  id: number;
-  isGroupChat: boolean;
-  createdAt: Date;
-  updateAt: Date;
-  user?: User; // not undefined if it's not a group chat, else undefined
-  users?: User[]; // not undefined if it's a group chat, else undefined
-  messages?: Message[];
+  lastMessage?: {
+    content: string;
+    createdAt: Date;
+    senderId: string;
+  };
 };
 
 type ChatResponse = {
-  groups?: Group[];
-  chats?: Chat[];
+  groups: Group[];
+  chats: Chat[];
 };
+
+
 
 type SignedURLResponse = Promise<
   { failure?: undefined; success: { url: string } }
