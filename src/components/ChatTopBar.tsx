@@ -1,109 +1,133 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import {  X, Users } from "lucide-react";
+import { X, ChevronDown, ChevronUp, MessageCircleOff } from "lucide-react";
 import { useSelectedChat } from "@/store/useSelectedUser";
 import { useKindeBrowserClient } from "@kinde-oss/kinde-auth-nextjs";
 import { fetchGroupDetails, leaveGroup } from '@/action';
 import { Skeleton } from './ui/skeleton';
-import { MessageCircleOff } from 'lucide-react';
 import { Button } from './ui/button';
 import { useRouter } from 'next/navigation';
-
-
-
+import { GroupMembersList } from './GroupMembersList';
+import { Tooltip, TooltipContent, TooltipProvider } from './ui/tooltip';
 
 const ChatTopBar = () => {
   const { selectedChat, setSelectedChat } = useSelectedChat();
   const { user } = useKindeBrowserClient();
+  const [showMembers, setShowMembers] = useState(false);
 
-  const { data: groupDetails, isLoading, isError } = useQuery({
-    queryKey: ['groupDetails', selectedChat?.id],
-    queryFn: () => selectedChat? fetchGroupDetails(selectedChat.id):null,
-    enabled: !!selectedChat?.isGroupChat && !!selectedChat?.id,
+  const { data: groupDetails, isLoading } = useQuery({
+    queryKey: ['groupDetails', selectedChat?.id, selectedChat?.isGroupChat],
+    queryFn: () => selectedChat ? fetchGroupDetails(selectedChat.id, selectedChat.isGroupChat) : null,
+    enabled: !!selectedChat?.id,
   });
 
-  const router = useRouter()
+  const router = useRouter();
 
-const handleLeaveGroup = async () => {
-  if (!selectedChat?.isGroupChat || !user?.id) return
-
-  try {
-    const res= await leaveGroup(user.id, groupDetails?.id!)
-    console.log(res);
-    setSelectedChat(null) // Clear the selected chat
-    router.refresh() // Refresh the page to reflect the changes
-  } catch (error) {
-    console.error('Failed to leave group:', error)
-    
-  }
-}
-  const handleCloseChat = () => {
-    setSelectedChat(null);
+  const handleLeaveGroup = async () => {
+    if (!selectedChat?.isGroupChat || !user?.id || !groupDetails?.id) return;
+    try {
+      await leaveGroup(user.id, groupDetails.id);
+      setSelectedChat(null);
+      router.refresh();
+    } catch (error) {
+      console.error('Failed to leave group:', error);
+    }
   };
+
+  const handleCloseChat = () => setSelectedChat(null);
+  const toggleMembersList = () => setShowMembers(!showMembers);
 
   if (!selectedChat) return null;
 
   const isGroupChat = selectedChat.isGroupChat;
-  const chatName = isGroupChat ? groupDetails?.name :  selectedChat.user?.firstName
-  const chatImage = isGroupChat 
-    ? groupDetails?.image : selectedChat.user?.profileImage;
-    
+  const chatName = isGroupChat ? groupDetails?.name : selectedChat.user?.firstName;
+  const chatImage = isGroupChat ? groupDetails?.image : selectedChat.user?.profileImage;
 
   return (
-    <div className="w-full h-20 flex p-4 justify-between items-center border-b">
-      <div className="flex items-center gap-2">
-        <Avatar className="flex justify-center items-center">
-          {isLoading ? (
-             <Skeleton className="w-10 h-10 rounded-full" />
-          ) : (
-            <>
-              <AvatarImage
-                src={chatImage as string}
-                alt={isGroupChat ? "Group Image" : "User Image"}
-                className="w-10 h-10 object-cover rounded-full"
-              />
-              <AvatarFallback>
-                {chatName?.[0]}
-              </AvatarFallback>
-            </>
+    <div className="w-full flex flex-col border-b">
+      <div className="h-20 flex p-4 justify-between items-center bg-secondary/10">
+        <div className="flex items-center gap-3">
+          <Avatar className="h-12 w-12">
+            {isLoading ? (
+              <Skeleton className="h-12 w-12 rounded-full" />
+            ) : (
+              <>
+                <AvatarImage
+                  src={chatImage || ''}
+                  alt={isGroupChat ? "Group Image" : "User Image"}
+                />
+                <AvatarFallback>{chatName?.[0]}</AvatarFallback>
+              </>
+            )}
+          </Avatar>
+          <div className="flex flex-col">
+            {isLoading ? (
+              <Skeleton className="h-5 w-32" />
+            ) : (
+              <span className="font-semibold text-lg">{chatName}</span>
+            )}
+            {isGroupChat && !isLoading && groupDetails?.users && (
+              <span className="text-sm text-muted-foreground">
+                {groupDetails.users.length} members
+              </span>
+            )}
+          </div>
+        </div>
+
+        <div className="flex gap-2 items-center">
+          {isGroupChat && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipContent>{showMembers ? "Hide members" : "Show members"}</TooltipContent>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={toggleMembersList}
+                className="text-muted-foreground hover:text-primary"
+              >
+                {showMembers ? <ChevronUp /> : <ChevronDown />}
+              </Button>
+            </Tooltip>
+            </TooltipProvider>
           )}
-        </Avatar>
-        <div className="flex flex-col">
-          {isLoading ? (
-            <Skeleton className="h-4 w-24" />
-			
-          ) : (
-            <span className="font-medium">{chatName}</span>
+          {isGroupChat && (
+           <TooltipProvider>
+             <Tooltip>
+             <TooltipContent>
+             Leave group
+          </TooltipContent>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleLeaveGroup}
+                className="text-muted-foreground hover:text-destructive"
+              >
+                <MessageCircleOff />
+              </Button>
+            </Tooltip>
+           </TooltipProvider>
           )}
-          {isGroupChat && !isLoading && (
-            <span className="text-xs text-muted-foreground">
-              {selectedChat?.users?.length || 0} members
-            </span>
-          )}
+         <TooltipProvider>
+         <Tooltip >
+          <TooltipContent>
+          Close chat
+          </TooltipContent>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleCloseChat}
+              className="text-muted-foreground hover:text-primary"
+            >
+              <X />
+            </Button>
+          </Tooltip>
+         </TooltipProvider>
         </div>
       </div>
-
-      <div className="flex gap-2 items-center">
-        {isGroupChat && (
-          <>
-            <Users className="text-muted-foreground cursor-pointer hover:text-primary" />
-            <button
-              className="text-muted-foreground cursor-pointer hover:text-primary text-sm hidden sm:block"
-              onClick={handleLeaveGroup}
-            >
-              <Button size={"icon"} variant={"ghost"} onClick={()=>handleLeaveGroup()}>
-			  <MessageCircleOff></MessageCircleOff>
-			  </Button>
-            </button>
-          </>
-        )}
-       
-        <X
-          className="text-muted-foreground cursor-pointer hover:text-primary"
-          onClick={handleCloseChat}
-        />
-      </div>
+      {isGroupChat && showMembers && groupDetails?.users && (
+        <GroupMembersList users={groupDetails.users} adminId={groupDetails.groupAdminId} groupId={  groupDetails.id} />
+      )}
     </div>
   );
 };

@@ -513,45 +513,61 @@ export async function fetchInitialData(userId: string): Promise<ChatResponse> {
 	  await prisma.$disconnect();
 	}
   }
-  export async function fetchGroupDetails(chatId: number) {
+  export async function fetchGroupDetails(chatId: number, isGroupChat: boolean) {
 	try {
-	  // First, check if the chat is a group chat
 	  const chat = await prisma.chat.findUnique({
 		where: { id: chatId },
 		select: { isGroupChat: true, groupId: true }
-	  })
+	  });
   
 	  if (!chat) {
-		throw new Error('Chat not found')
+		throw new Error('Chat not found');
 	  }
   
 	  if (!chat.isGroupChat || !chat.groupId) {
-		throw new Error('This is not a group chat')
+		throw new Error('This is not a group chat');
 	  }
   
-	  // Fetch group details
-	  const groupDetails = await prisma.group.findUnique({
-		where: { id: chat.groupId },
-		select: {
-		  id: true,
-		  name: true,
-		  image: true,
-		  createdAt: true,
-		  updatedAt: true,
-		  groupAdminId: true,
-		  // We're not fetching users as per the requirement
-		}
-	  })
+	  const [groupDetails, groupUsers] = await Promise.all([
+		prisma.group.findUnique({
+		  where: { id: chat.groupId },
+		  select: {
+			id: true,
+			name: true,
+			image: true,
+			createdAt: true,
+			updatedAt: true,
+			groupAdminId: true,
+		  }
+		}),
+		isGroupChat ? prisma.groupUser.findMany({
+		  where: { groupId: chat.groupId },
+		  select: {
+			user: {
+			  select: {
+				id: true,
+				firstName: true,
+				lastName: true,
+				email: true,
+				profileImage: true,
+			  }
+			}
+		  }
+		}) : Promise.resolve([])
+	  ]);
   
 	  if (!groupDetails) {
-		throw new Error('Group details not found')
+		throw new Error('Group details not found');
 	  }
   
-	  return groupDetails
+	  return {
+		...groupDetails,
+		users: isGroupChat ? groupUsers.map(gu => gu.user) : undefined,
+	  };
   
 	} catch (error) {
-	  console.error('Error fetching group details:', error)
-	  throw error
+	  console.error('Error fetching group details:', error);
+	  throw error;
 	}
   }
 
@@ -621,3 +637,36 @@ export async function fetchInitialData(userId: string): Promise<ChatResponse> {
 	  throw error
 	}
 }
+export async function removeMemberFromGroup(userId: string, groupId: number) {
+	try {
+	  await prisma.groupUser.delete({
+		where: {
+		  userId_groupId: {
+			userId,
+			groupId,
+		  },
+		},
+	  });
+  
+	  return { success: true, message: 'Member removed successfully' };
+	} catch (error) {
+	  console.error('Error removing member from group:', error);
+	  throw error;
+	}
+  }
+
+
+export async function promoteToAdmin(userId: string, groupId: number) {
+	try {
+	  await prisma.group.update({
+		where: { id: groupId },
+		data: { groupAdminId: userId },
+	  });
+  
+	  return { success: true, message: 'Member promoted to admin successfully' };
+	} catch (error) {
+	  console.error('Error promoting member to admin:', error);
+	  throw error;
+	}
+  }
+  
