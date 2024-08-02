@@ -1,28 +1,32 @@
 import { create } from 'zustand';
 
-interface GroupUser {
-  id: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  profileImage: string | null;
-}
 
-interface GroupChatState {
-  groupUsers: Record<number, GroupUser[]>;
-  setGroupUsers: (chatId: number, users: GroupUser[]) => void;
-  clearGroupUsers: (chatId: number) => void;
-}
 
-export const useGroupChatStore = create<GroupChatState>((set) => ({
-  groupUsers: {},
-  setGroupUsers: (chatId, users) => 
-    set((state) => ({ 
-      groupUsers: { ...state.groupUsers, [chatId]: users } 
-    })),
-  clearGroupUsers: (chatId) => 
-    set((state) => {
-      const { [chatId]: _, ...rest } = state.groupUsers;
-      return { groupUsers: rest };
-    }),
+
+
+export const useGroupStore = create<GroupStore>((set) => ({
+  currentGroup: null,
+  
+  setCurrentGroup: (group: Group) => {
+    const groupMetadata: GroupMetadata = {
+      id: group.id,
+      name: group.name,
+      image: group.image || '',
+      users: group.users.map(user => ({
+        id: user.id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        profileImage: user.profileImage,
+        email: user.email,
+      })),
+      adminId: group.groupAdminId,
+      createdAt: group.createdAt,
+      updatedAt: group.updatedAt,
+    };
+    set({ currentGroup: groupMetadata });
+  },
+
+  clearCurrentGroup: () => {
+    set({ currentGroup: null });
+  },
 }));

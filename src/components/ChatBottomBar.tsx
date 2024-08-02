@@ -88,7 +88,6 @@ const ChatBottomBar: React.FC = () => {
     
     try {
       const isGroupChat = selectedChat?.isGroupChat ?? false;
-      const receiverId = isGroupChat ? undefined : selectedChat?.user?.id as string;
       const hasAnyFile = !!file;
       const chatId = selectedChat?.id as number;
       const messageContent = content ?? message;
@@ -98,9 +97,7 @@ const ChatBottomBar: React.FC = () => {
       if (hasAnyFile) {
         fileUrl = await createFileUrl(file);
       }
-
-      
-      const result = await sendMessageAction(chatId, isGroupChat, hasAnyFile, messageContent, receiverId, fileUrl, fileType);
+      const result = await sendMessageAction(chatId, isGroupChat, hasAnyFile, messageContent, fileUrl, fileType);
     if (result.success) {
       result.messages.forEach(message => {
         addMessage(message);

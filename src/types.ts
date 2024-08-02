@@ -7,6 +7,7 @@ type User = {
 };
 
 type Message = {
+  length: number;
   id: number;
   content: string;
   createdAt: Date;
@@ -22,6 +23,7 @@ type Chat = {
   createdAt: Date;
   updatedAt: Date;
   user?: User; // for non-group chats
+  users?:User[], // for group chats
   lastMessage?: {
     content: string;
     createdAt: Date;
@@ -37,6 +39,8 @@ type Group = {
   updatedAt: Date;
   groupAdminId: string | null;
   numberOfMembers: number;
+  users: User[];
+  groupchatId:number,
   lastMessage?: {
     content: string;
     createdAt: Date;
@@ -61,3 +65,19 @@ type SendMessageResult = {
   success: boolean;
   messages: Message[];
 };
+
+interface GroupMetadata {
+  id: number;
+  name: string;
+  image: string;
+  users: User[];
+  adminId: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+interface GroupStore {
+  currentGroup: GroupMetadata | null;
+  setCurrentGroup: (group: Group) => void;
+  clearCurrentGroup: () => void;
+}
