@@ -1,17 +1,26 @@
+import React, { useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
 import { AnimatePresence, motion } from "framer-motion";
-import { Avatar, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useSelectedChat } from "@/store/useSelectedUser";
 import { useKindeBrowserClient } from "@kinde-oss/kinde-auth-nextjs";
 import { pusherClient } from '@/lib/pusher-client';
-import { useEffect, useRef } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import { fetchChatMessages } from "@/action";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Loader2 } from "lucide-react";
+import { useGroupStore } from '../store/groupchatstore';
 
-type ExtendedChat = Chat & { messages?: Message[] };
+type Message = {
+  id: number;
+  content: string;
+  createdAt: Date;
+  updatedAt: Date;
+  senderId: string;
+  chatId: number;
+  type: 'text' | 'image' | 'video';
+};
 
 const fetchMessages = async (chatId: number): Promise<Message[]> => {
   try {
@@ -22,19 +31,20 @@ const fetchMessages = async (chatId: number): Promise<Message[]> => {
   }
 };
 
-const MessageList = () => {
+const MessageList: React.FC = () => {
   const { selectedChat, addMessage } = useSelectedChat();
   const { user: currentUser } = useKindeBrowserClient();
   const messageContainerRef = useRef<HTMLDivElement>(null);
   const lastMessageRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
+  const currentGroup = useGroupStore(state => state.currentGroup);
 
   const { data: messages, isLoading, isError, error } = useQuery<Message[], Error>({
     queryKey: ['messages', selectedChat?.id],
     queryFn: () => fetchMessages(selectedChat?.id as number),
     enabled: !!selectedChat?.id,
     refetchOnWindowFocus: false,
-    staleTime: 1000 * 60 * 5, 
+    staleTime: 1000 * 60 * 5, // 5 minutes
   });
 
   useEffect(() => {
@@ -59,6 +69,85 @@ const MessageList = () => {
       lastMessageRef.current.scrollIntoView({ behavior: "smooth" });
     }
   }, [messages]);
+
+  const renderMessageContent = (message: Message) => {
+    if (message.type === "text") {
+      return <span className='bg-accent p-3 rounded-md max-w-xs break-words'>{message.content}</span>;
+    } else {
+      return (
+        <img
+          src={message.content}
+          alt='Message Image'
+          className='border p-2 rounded h-40 md:h-52 object-cover'
+        />
+      );
+    }
+  };
+
+  const renderAvatar = (senderId: string) => {
+    const isCurrentUser = senderId === currentUser?.id;
+    const sender = isCurrentUser 
+      ? currentUser 
+      : (selectedChat?.isGroupChat 
+        ? currentGroup?.users.find(user => user.id === senderId)
+        : selectedChat?.user);
+
+    return (
+      <Avatar className='flex justify-center items-center'>
+        <AvatarImage
+          src={sender?.profileImage || sender?.picture || ""}
+          alt='User Image'
+          className='border-2 border-white rounded-full'
+        />
+        <AvatarFallback>{sender?.firstName?.[0] || 'U'}</AvatarFallback>
+      </Avatar>
+    );
+  };
+
+  const renderMessage = (message: Message, index: number) => {
+    const isCurrentUser = message.senderId === currentUser?.id;
+    const showSenderInfo = selectedChat?.isGroupChat && !isCurrentUser;
+
+    return !isError && messages?.length ? (
+      <motion.div
+        key={message.id}
+        ref={index===messages.length-1 ? lastMessageRef : null}
+        layout
+
+        initial={{ opacity: 0, scale: 1, y: 50, x: 0 }}
+        animate={{ opacity: 1, scale: 1, y: 0, x: 0 }}
+        exit={{ opacity: 0, scale: 1, y: 1, x: 0 }}
+        transition={{
+          opacity: { duration: 0.1 },
+          layout: {
+            type: "spring",
+            bounce: 0.3,
+            duration: messages ? messages.indexOf(message) * 0.05 + 0.2 : 0
+          },
+        }}
+        style={{ originX: 0.5, originY: 0.5 }}
+        className={cn(
+          "flex flex-col gap-2 p-4 whitespace-pre-wrap",
+          isCurrentUser ? "items-end" : "items-start"
+        )}
+      >
+        <div className={cn('flex gap-3 items-end', isCurrentUser && 'flex-row-reverse')}>
+          {renderAvatar(message.senderId)}
+          <div className="flex flex-col">
+            {showSenderInfo && (
+              <span className="text-xs text-muted-foreground mb-1">
+                {currentGroup?.users.find(user => user.id === message.senderId)?.firstName || 'Unknown User'}
+              </span>
+            )}
+            {renderMessageContent(message)}
+            <span className="text-xs text-muted-foreground mt-1">
+              {new Date(message.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+            </span>
+          </div>
+        </div>
+      </motion.div>
+    ):null;
+  };
 
   if (isLoading) {
     return (
@@ -87,59 +176,7 @@ const MessageList = () => {
   return (
     <div ref={messageContainerRef} className='w-full overflow-y-auto overflow-x-hidden h-full flex flex-col'>
       <AnimatePresence>
-        {messages?.map((message, index) => (
-          <motion.div
-            key={message.id}
-            ref={index === messages.length - 1 ? lastMessageRef : null}
-            layout
-            initial={{ opacity: 0, scale: 1, y: 50, x: 0 }}
-            animate={{ opacity: 1, scale: 1, y: 0, x: 0 }}
-            exit={{ opacity: 0, scale: 1, y: 1, x: 0 }}
-            transition={{
-              opacity: { duration: 0.1 },
-              layout: {
-                type: "spring",
-                bounce: 0.3,
-                duration: messages ? messages.indexOf(message) * 0.05 + 0.2 : 0
-              },
-            }}
-            style={{ originX: 0.5, originY: 0.5 }}
-            className={cn(
-              "flex flex-col gap-2 p-4 whitespace-pre-wrap",
-              message.senderId === currentUser?.id ? "items-end" : "items-start"
-            )}
-          >
-            <div className='flex gap-3 items-center'>
-              {message.senderId === selectedChat?.user?.id && (
-                <Avatar className='flex justify-center items-center'>
-                  <AvatarImage
-                    src={selectedChat?.user?.profileImage || "/user-placeholder.png"}
-                    alt='User Image'
-                    className='border-2 border-white rounded-full'
-                  />
-                </Avatar>
-              )}
-              {message.type === "text" ? (
-                <span className='bg-accent p-3 rounded-md max-w-xs break-words'>{message.content}</span>
-              ) : (
-                <img
-                  src={message.content}
-                  alt='Message Image'
-                  className='border p-2 rounded h-40 md:h-52 object-cover'
-                />
-              )}
-              {message.senderId === currentUser?.id && (
-                <Avatar className='flex justify-center items-center'>
-                  <AvatarImage
-                    src={currentUser?.picture || "/user-placeholder.png"}
-                    alt='User Image'
-                    className='border-2 border-white rounded-full'
-                  />
-                </Avatar>
-              )}
-            </div>
-          </motion.div>
-        ))}
+        {messages?.map((message, index) => renderMessage(message, index))}
       </AnimatePresence>
       {isLoading && (
         <div className="flex justify-center items-center p-4">
