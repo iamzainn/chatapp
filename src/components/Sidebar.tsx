@@ -100,7 +100,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, chats, users, groups }) 
             <>
               <Avatar>
                 <AvatarImage
-                  src={user?.picture || "/chat.user-placeholder.png"}
+                  src={user?.picture || ""}
                   alt='avatar'
                   referrerPolicy='no-referrer'
                 />
@@ -112,7 +112,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, chats, users, groups }) 
               </div>
             </>
           )}
-          <LogoutLink>
+          <LogoutLink >
             <Button variant="ghost" size="icon">
               <LogOut size={20} />
             </Button>

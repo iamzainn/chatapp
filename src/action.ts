@@ -178,7 +178,7 @@ const generateFileName = (bytes = 32) => crypto.randomBytes(bytes).toString("hex
 	  const cleanedUrl = cleanS3Url(fileUrl);
 	  const fileMessageType: MessageType = fileType?.includes("video") ? MessageType.video : MessageType.image;
 	  messageData.push({
-		content: cleanedUrl,
+		content: cleanedUrl as string,
 		senderId,
 		chatId: chat.id,
 		type: fileMessageType,
@@ -198,7 +198,7 @@ const generateFileName = (bytes = 32) => crypto.randomBytes(bytes).toString("hex
 	let createdMessages: Message[] = [];
   if (messageData.length > 0) {
     createdMessages = await prisma.$transaction(
-      messageData.map((data) => prisma.message.create({ data  }))
+      messageData.map((data) => prisma.message.create({ data   }))
     );
 
     createdMessages.forEach((message) => {
@@ -378,67 +378,10 @@ const generateFileName = (bytes = 32) => crypto.randomBytes(bytes).toString("hex
 	  await prisma.$disconnect();
 	}
   }
-  export async function fetchGroupDetails(chatId: number, isGroupChat: boolean) {
-	try {
-	  const chat = await prisma.chat.findUnique({
-		where: { id: chatId },
-		select: { isGroupChat: true, groupId: true }
-	  });
-  
-	  if (!chat) {
-		throw new Error('Chat not found');
-	  }
-  
-	  if (!chat.isGroupChat || !chat.groupId) {
-		throw new Error('This is not a group chat');
-	  }
-  
-	  const [groupDetails, groupUsers] = await Promise.all([
-		prisma.group.findUnique({
-		  where: { id: chat.groupId },
-		  select: {
-			id: true,
-			name: true,
-			image: true,
-			createdAt: true,
-			updatedAt: true,
-			groupAdminId: true,
-		  }
-		}),
-		isGroupChat ? prisma.groupUser.findMany({
-		  where: { groupId: chat.groupId },
-		  select: {
-			user: {
-			  select: {
-				id: true,
-				firstName: true,
-				lastName: true,
-				email: true,
-				profileImage: true,
-			  }
-			}
-		  }
-		}) : Promise.resolve([])
-	  ]);
-  
-	  if (!groupDetails) {
-		throw new Error('Group details not found');
-	  }
-  
-	  return {
-		...groupDetails,
-		users: isGroupChat ? groupUsers.map(gu => gu.user) : undefined,
-	  };
-  
-	} catch (error) {
-	  console.error('Error fetching group details:', error);
-	  throw error;
-	}
-  }
-
+ 
   export async function leaveGroup(userId: string, groupId: number) {
 	try {
-	  // Check if the user is in the group
+	
 	  const groupUser = await prisma.groupUser.findUnique({
 		where: {
 		  userId_groupId: {
@@ -491,11 +434,8 @@ const generateFileName = (bytes = 32) => crypto.randomBytes(bytes).toString("hex
 		  },
 		})
 	  })
-  
-	  // Revalidate paths
-	  revalidatePath('/chat')
-	  revalidatePath('/', 'layout')
-  
+  	  
+	  revalidatePath('/chat', 'layout');
 	  return { success: true, message: 'Successfully left the group' }
 	} catch (error) {
 	  console.error('Error leaving group:', error)
@@ -512,8 +452,9 @@ export async function removeMemberFromGroup(userId: string, groupId: number) {
 		  },
 		},
 	  });
-  
+	  revalidatePath('/chat', 'layout');
 	  return { success: true, message: 'Member removed successfully' };
+	  
 	} catch (error) {
 	  console.error('Error removing member from group:', error);
 	  throw error;
@@ -527,8 +468,10 @@ export async function promoteToAdmin(userId: string, groupId: number) {
 		where: { id: groupId },
 		data: { groupAdminId: userId },
 	  });
-  
+	  revalidatePath('/chat', 'layout');
 	  return { success: true, message: 'Member promoted to admin successfully' };
+
+	  
 	} catch (error) {
 	  console.error('Error promoting member to admin:', error);
 	  throw error;

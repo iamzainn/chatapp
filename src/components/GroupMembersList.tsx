@@ -1,142 +1,94 @@
-import React from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { MoreVertical, UserMinus, UserPlus } from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
-
+import React, { useState } from 'react';
+import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar';
+import { Button } from './ui/button';
+import { removeMemberFromGroup, promoteToAdmin } from '../action';
+import { useToast } from "../components/ui/use-toast";
+import { Loader2, UserMinus, UserPlus } from "lucide-react";
+import { useRouter } from 'next/navigation';
 import { useKindeBrowserClient } from "@kinde-oss/kinde-auth-nextjs";
-import { promoteToAdmin, removeMemberFromGroup } from '@/action';
 
 interface User {
   id: string;
   firstName: string;
-  lastName: string;
-  email: string;
-  profileImage: string;
+  profileImage?: string;
 }
 
-interface GroupMembersListProps {
+interface GML {
   users: User[];
-  adminId: string | null;
   groupId: number;
+  adminId: string;
 }
 
-type RemoveMemberResult = { success: boolean; message: string };
-type PromoteToAdminResult = { success: boolean; message: string };
+export const GroupMembersList: React.FC<GML> = ({ users, groupId, adminId }) => {
+  const { toast } = useToast();
+  const router = useRouter();
+  const { user } = useKindeBrowserClient();
+  const [loadingStates, setLoadingStates] = useState<Record<string, boolean>>({});
 
-const UserListItem: React.FC<{
-  user: User;
-  isAdmin: boolean;
-  isCurrentUserAdmin: boolean;
-  currentUserId: string | undefined;
-  onRemove: () => void;
-  onPromote: () => void;
-  isLoading: boolean;
-}> = ({ user, isAdmin, isCurrentUserAdmin, currentUserId, onRemove, onPromote, isLoading }) => (
-  <li className="flex items-center gap-2 p-2 rounded-md hover:bg-secondary/20 transition-colors">
-    <Avatar className="h-10 w-10">
-      <AvatarImage src={user.profileImage} alt={`${user.firstName} ${user.lastName}`} />
-      <AvatarFallback>{user.firstName[0]}</AvatarFallback>
-    </Avatar>
-    <div className="flex-grow">
-      <span className="text-sm font-medium">{user.firstName} {user.lastName}</span>
-      <p className="text-xs text-muted-foreground">{user.email}</p>
-    </div>
-    {isAdmin && (
-      <Badge variant="secondary" className="mr-2">Admin</Badge>
-    )}
-    {isCurrentUserAdmin && user.id !== currentUserId && (
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" disabled={isLoading}>
-                  {isLoading ? <Skeleton className="h-4 w-4 rounded-full" /> : <MoreVertical className="h-4 w-4" />}
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={onRemove}>
-                  <UserMinus className="mr-2 h-4 w-4" />
-                  Remove from group
-                </DropdownMenuItem>
-                {!isAdmin && (
-                  <DropdownMenuItem onClick={onPromote}>
-                    <UserPlus className="mr-2 h-4 w-4" />
-                    Make admin
-                  </DropdownMenuItem>
-                )}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>Manage user</p>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
-    )}
-  </li>
-);
+  const isCurrentUserAdmin = user?.id === adminId;
 
-export const GroupMembersList: React.FC<GroupMembersListProps> = ({ users, adminId, groupId }) => {
-  const { user: currentUser } = useKindeBrowserClient();
-  const queryClient = useQueryClient();
+  const handleAction = async (action: 'remove' | 'promote', userId: string) => {
+    if (!isCurrentUserAdmin) return;
 
-  const { mutateAsync: removeMutation,  isPending: removeLoading} = useMutation<RemoveMemberResult, Error, { userId: string }>({
-    mutationFn: ({ userId }) => removeMemberFromGroup(userId, groupId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['groupDetails', groupId] });
-    },
-  });
-
-  const { mutateAsync: promoteMutation,  isPending: promoteLoading}= useMutation<PromoteToAdminResult, Error, { userId: string }>({
-    mutationFn: ({ userId }) => promoteToAdmin(userId, groupId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['groupDetails', groupId] });
-    },
-  });
-
-  const handleRemoveMember = (userId: string) => {
-    removeMutation({ userId });
+    setLoadingStates(prev => ({ ...prev, [userId]: true }));
+    try {
+      if (action === 'remove') {
+        await removeMemberFromGroup(userId, groupId);
+        toast({ title: "Success", description: "Member removed from the group." });
+      } else if (action === 'promote') {
+        await promoteToAdmin(userId, groupId);
+        toast({ title: "Success", description: "Member promoted to admin." });
+      }
+      router.refresh(); // Revalidate and update the UI
+    } catch (error) {
+      console.error(`Failed to ${action} member:`, error);
+      toast({
+        title: "Error",
+        description: `Failed to ${action} member. Please try again.`,
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingStates(prev => ({ ...prev, [userId]: false }));
+    }
   };
-
-  const handlePromoteToAdmin = (userId: string) => {
-    promoteMutation({ userId });
-  };
-
-  const isCurrentUserAdmin = currentUser?.id === adminId;
 
   return (
-    <Card className="w-full max-w-md mx-auto">
-      <CardHeader>
-        <CardTitle>Group Members</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <ul className="space-y-2 max-h-60 overflow-y-auto">
-          {users.map((user) => (
-            <UserListItem
-              key={user.id}
-              user={user}
-              isAdmin={user.id === adminId}
-              isCurrentUserAdmin={isCurrentUserAdmin}
-              currentUserId={currentUser?.id}
-              onRemove={() => handleRemoveMember(user.id)}
-              onPromote={() => handlePromoteToAdmin(user.id)}
-              isLoading={removeLoading|| promoteLoading}
-            />
-          ))}
-        </ul>
-      </CardContent>
-    </Card>
+    <div className="p-4 bg-secondary/5">
+      <h3 className="font-semibold mb-2">Group Members</h3>
+      <ul className="space-y-2">
+        {users.map((user) => (
+          <li key={user.id} className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Avatar className="h-8 w-8">
+                <AvatarImage src={user.profileImage} alt={user.firstName} />
+                <AvatarFallback>{user.firstName[0]}</AvatarFallback>
+              </Avatar>
+              <span>{user.firstName}</span>
+              {user.id === adminId && <span className="text-xs text-muted-foreground ml-2">(Admin)</span>}
+            </div>
+            {isCurrentUserAdmin && user.id !== adminId && (
+              <div className="space-x-2">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => handleAction('remove', user.id)}
+                  disabled={loadingStates[user.id]}
+                >
+                  {loadingStates[user.id] ? <Loader2 className="animate-spin" size={16} /> : <UserMinus size={16} />}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => handleAction('promote', user.id)}
+                  disabled={loadingStates[user.id]}
+                >
+                  {loadingStates[user.id] ? <Loader2 className="animate-spin" size={16} /> : <UserPlus size={16} />}
+                </Button>
+              </div>
+            )}
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 };

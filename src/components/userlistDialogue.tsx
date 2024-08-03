@@ -87,7 +87,7 @@ export const UserListDialog = ({ users }: { users: User[] }) => {
 
   return (
     <Dialog>
-      <DialogTrigger>
+      <DialogTrigger asChild>
         <Button variant="outline" className="gap-2">
         <MessageCircle size={20} />
         </Button>
@@ -206,10 +206,10 @@ export const UserListDialog = ({ users }: { users: User[] }) => {
         </div>
 
         <div className="mt-6 flex justify-end space-x-2">
-          <Button variant="outline" onClick={() => dialogCloseRef.current?.click()}>
+          <Button type="button" variant="outline" onClick={() => dialogCloseRef.current?.click()}>
             Cancel
           </Button>
-          <Button
+          <Button type="submit"
             onClick={handleCreateConversation}
             disabled={selectedUsers.length === 0 || (selectedUsers.length > 1 && !groupName) || isLoading}
             className="bg-green-600 hover:bg-green-700 text-white"

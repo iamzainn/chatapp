@@ -85,21 +85,20 @@ const MessageList: React.FC = () => {
   };
 
   const renderAvatar = (senderId: string) => {
-    const isCurrentUser = senderId === currentUser?.id;
-    const sender = isCurrentUser 
-      ? currentUser 
-      : (selectedChat?.isGroupChat 
-        ? currentGroup?.users.find(user => user.id === senderId)
-        : selectedChat?.user);
+   
+    const user:User | undefined = currentGroup?.users.find(user => user.id === senderId);
+    
+
+
 
     return (
       <Avatar className='flex justify-center items-center'>
         <AvatarImage
-          src={sender?.profileImage || sender?.picture || ""}
+          src={user?.profileImage || ""}
           alt='User Image'
           className='border-2 border-white rounded-full'
         />
-        <AvatarFallback>{sender?.firstName?.[0] || 'U'}</AvatarFallback>
+        <AvatarFallback>{user?.firstName?.[0]}</AvatarFallback> 
       </Avatar>
     );
   };

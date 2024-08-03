@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { X, ChevronDown, ChevronUp, MessageCircleOff, Users } from "lucide-react";
+import { X, ChevronDown, ChevronUp, MessageCircleOff, Users, Loader2 } from "lucide-react";
 import { useSelectedChat } from "@/store/useSelectedUser";
 import { useKindeBrowserClient } from "@kinde-oss/kinde-auth-nextjs";
 import { leaveGroup } from '@/action';
@@ -9,6 +9,11 @@ import { useRouter } from 'next/navigation';
 import { GroupMembersList } from './GroupMembersList';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 import { useGroupStore } from '../store/groupchatstore';
+import { useToast } from "@/components/ui/use-toast"
+import { unstable_noStore as noStore } from "next/cache";
+
+
+
 
 
 interface tooltipProps {
@@ -16,34 +21,54 @@ interface tooltipProps {
   onClick: () => void;
   icon:React.JSX.Element;
   className?: string;
+  disabled?: boolean;
 
   
 }
 
 const ChatTopBar = () => {
+  noStore();
   const { selectedChat, setSelectedChat } = useSelectedChat();
   const { user } = useKindeBrowserClient();
   const [showMembers, setShowMembers] = useState(false);
   const router = useRouter();
   const currentGroup = useGroupStore(state => state.currentGroup);
+  const { toast } = useToast();
+  const [isLeaving, setIsLeaving] = useState(false);
 
   if (!selectedChat) return null;
 
   const isGroupChat = selectedChat.isGroupChat;
-  const chatDetails = isGroupChat ? currentGroup:null;
+  const chatDetails = isGroupChat ? currentGroup : null;
 
   const handleLeaveGroup = async () => {
     if (!isGroupChat || !user?.id || !currentGroup?.id) return;
+    setIsLeaving(true);
     try {
       await leaveGroup(user.id, currentGroup.id);
       setSelectedChat(null);
-      router.refresh();
+      toast({
+        title: "Success",
+        description: "You have left the group.",
+      });
+      router.refresh(); // Revalidate and update the UI
     } catch (error) {
       console.error('Failed to leave group:', error);
+      toast({
+        title: "Error",
+        description: "Failed to leave the group. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLeaving(false);
     }
   };
 
-  const handleCloseChat = () => setSelectedChat(null);
+  const handleCloseChat = () => {
+    setSelectedChat(null);
+    router.refresh(); // Revalidate and update the UI
+  };
+
   const toggleMembersList = () => setShowMembers(!showMembers);
 
   const renderAvatar = () => (
@@ -63,7 +88,7 @@ const ChatTopBar = () => {
       <AvatarFallback>{chatDetails?.name?.[0]}</AvatarFallback>
     </Avatar>
   );
-
+  
   const renderChatInfo = () => (
     <div className="flex flex-col">
       <span className="font-semibold text-lg">{isGroupChat?chatDetails?.name: selectedChat.user?.firstName}</span>
@@ -87,8 +112,9 @@ const ChatTopBar = () => {
           <TooltipButton
             onClick={handleLeaveGroup}
             tooltipContent="Leave group"
-            icon={<MessageCircleOff size={20} />}
+            icon={isLeaving ? <Loader2 className="animate-spin" size={20} /> : <MessageCircleOff size={20} />}
             className="hover:text-destructive"
+            disabled={isLeaving}
           />
         </>
       )}
@@ -112,20 +138,20 @@ const ChatTopBar = () => {
       {isGroupChat && showMembers && currentGroup?.users && (
         <GroupMembersList 
           users={currentGroup.users} 
-          adminId={currentGroup.adminId} 
+          adminId={currentGroup.adminId as string} 
           groupId={currentGroup.id} 
         />
       )}
     </div>
   );
 };
-
-const TooltipButton = ({icon,onClick,tooltipContent,className}: tooltipProps) => (
+const TooltipButton = ({icon,onClick,tooltipContent,className,disabled}: tooltipProps) => (
   <TooltipProvider>
     <Tooltip>
       <TooltipContent>{tooltipContent}</TooltipContent>
       <TooltipTrigger asChild>
         <Button
+          disabled={disabled}
           variant="ghost"
           size="icon"
           onClick={onClick}

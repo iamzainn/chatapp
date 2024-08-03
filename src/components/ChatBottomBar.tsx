@@ -136,7 +136,7 @@ const ChatBottomBar: React.FC = () => {
 
   return (
     <div className="p-4 bg-background border-t">
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen} >
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle className="text-center">File Preview</DialogTitle>
@@ -150,7 +150,7 @@ const ChatBottomBar: React.FC = () => {
               ) : null}
             </div>
           </div>
-          <Button variant="destructive" onClick={() => {
+          <Button type="button" variant="destructive" onClick={() => {
             setFile(null);
             setPreviewUrl(null);
             setIsDialogOpen(false);
@@ -215,6 +215,7 @@ const ChatBottomBar: React.FC = () => {
               <div className="absolute -top-8 left-0 bg-background p-1 rounded-md shadow-md flex items-center space-x-2">
                 <span className="text-sm text-muted-foreground">{file.name}</span>
                 <Button
+                  type="button"
                   size="sm"
                   variant="ghost"
                   className="h-6 w-6 p-0"

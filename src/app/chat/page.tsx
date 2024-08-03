@@ -9,11 +9,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { unstable_noStore as noStore } from "next/cache";
 
-
-
-
-
-export async function fetchInitialData(userId: string): Promise<ChatResponse> {
+ async function fetchInitialData(userId: string): Promise<ChatResponse> {
   try {
     // Define queries
     const chatsPromise = prisma.chat.findMany({
@@ -182,8 +178,8 @@ async function getallusers (myId:string){
 }
 
 
-export const chatPage = async () => {
-  noStore();
+ const Page = async () => {
+    noStore();
     const { getUser} = getKindeServerSession(); 
     const user = await getUser();
     const data = await fetchInitialData(user?.id as string)
@@ -207,7 +203,7 @@ export const chatPage = async () => {
   )
 }
 
-export default chatPage;
+export default Page;
 
 
 

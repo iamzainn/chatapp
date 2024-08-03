@@ -7,7 +7,7 @@ type User = {
 };
 
 type Message = {
-  length: number;
+ 
   id: number;
   content: string;
   createdAt: Date;
