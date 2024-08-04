@@ -46,12 +46,14 @@ export async function POST(req: Request) {
          {
             
                 const user= (event.data.user);
+                console.log(user.is_active);
                 
                 
 
                 await prisma.user.create({
                     data: {
                         id: user.id,
+                        isActive:true,
                         email: user.email,
                         firstName: user.first_name ?? "",
                         lastName: user.last_name ?? "",
@@ -74,6 +76,7 @@ export async function POST(req: Request) {
                 },
                 data: {
                     id: user.id,
+                    isActive:true,
                     email: user.email,
                     firstName: user.first_name ?? "",
                     lastName: user.last_name ?? "",
@@ -94,6 +97,34 @@ export async function POST(req: Request) {
           }
           break;
 
+          case "user.authenticated":{
+           const userId=  (event.data.user.id) as string ;
+           console.log(userId);
+           await prisma.user.update({
+            where: {
+                id: userId
+            },
+            data: {
+                isActive:true
+            },
+           })
+          }
+          break;
+
+
+          case "user.authentication_failed":{
+            const userId=  (event.data.user.id) as string ;
+            console.log(userId);
+            await prisma.user.update({
+             where: {
+                 id: userId
+             },
+             data: {
+                 isActive:false
+             },
+            })
+           }
+           break;
           default:
             throw new Error("Invalid event type");
          }

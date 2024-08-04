@@ -11,6 +11,8 @@ import { LogoutLink } from "@kinde-oss/kinde-auth-nextjs/components";
 import ChatItem from './ChatItem';
 import GroupItem from './GroupItem';
 import { useGroupStore } from '../store/groupchatstore';
+import { Skeleton } from './ui/skeleton';
+import { updateLogoutStatus } from '@/action';
 
 interface SidebarProps {
   isCollapsed: boolean;
@@ -21,12 +23,15 @@ interface SidebarProps {
 
 const Sidebar = forwardRef<HTMLDivElement, SidebarProps>(({ isCollapsed, chats, users, groups }, ref) => {
   const { selectedChat, setSelectedChat } = useSelectedChat();
-  const { user } = useKindeBrowserClient();
+  const { user,isLoading } = useKindeBrowserClient();
   const { setCurrentGroup } = useGroupStore();
 
   const handleChatClick = (chat: Chat) => {
     setSelectedChat(chat);
   };
+
+
+  if(isLoading) return <Skeleton/>
 
   const handleGroupClick = (group: Group) => {
     setCurrentGroup(group);
@@ -118,7 +123,9 @@ const Sidebar = forwardRef<HTMLDivElement, SidebarProps>(({ isCollapsed, chats, 
             </>
           )}
           <LogoutLink>
-            <Button variant="ghost" size="icon">
+            <Button onClick={()=>{
+             updateLogoutStatus(user?.id as string);
+            }} variant="ghost" size="icon">
               <LogOut size={20} />
             </Button>
           </LogoutLink>

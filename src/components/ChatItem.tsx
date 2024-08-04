@@ -6,7 +6,7 @@ import { format } from 'date-fns';
 import { Image, Video, FileText } from 'lucide-react';
 
 interface ChatItemProps {
-  chat: Chat;
+  chat: Chat
   isSelected: boolean;
   isCollapsed: boolean;
   onClick: (chat: Chat) => void;
@@ -44,13 +44,20 @@ const ChatItem: React.FC<ChatItemProps> = ({ chat, isSelected, isCollapsed, onCl
     );
   };
 
-  if (isCollapsed) {
-    return (
-      <Avatar onClick={() => onClick(chat)} className="cursor-pointer hover:ring-2 hover:ring-primary transition-all">
+  const AvatarWithStatus = () => (
+    <div className="relative">
+      <Avatar className={cn("shrink-0", isCollapsed && "cursor-pointer hover:ring-2 hover:ring-primary transition-all")}>
         <AvatarImage src={chat.user?.profileImage || ""} alt="User Image" />
         <AvatarFallback>{chat.user?.firstName?.[0]}</AvatarFallback>
       </Avatar>
-    );
+      {chat.user?.isActive && (
+        <span className="absolute bottom-0 right-0 block h-2.5 w-2.5 rounded-full bg-green-500 ring-2 ring-white" />
+      )}
+    </div>
+  );
+
+  if (isCollapsed) {
+    return <AvatarWithStatus />;
   }
 
   return (
@@ -63,10 +70,7 @@ const ChatItem: React.FC<ChatItemProps> = ({ chat, isSelected, isCollapsed, onCl
       )}
       onClick={() => onClick(chat)}
     >
-      <Avatar className="shrink-0">
-        <AvatarImage src={chat.user?.profileImage || ""} alt="User Image" />
-        <AvatarFallback>{chat.user?.firstName?.[0]}</AvatarFallback>
-      </Avatar>
+      <AvatarWithStatus />
       <div className="flex flex-col items-start overflow-hidden w-full">
         <span className="font-medium truncate w-full">{chat.user?.firstName}</span>
         {renderLastMessage(chat.lastMessage)}
@@ -75,4 +79,7 @@ const ChatItem: React.FC<ChatItemProps> = ({ chat, isSelected, isCollapsed, onCl
   );
 };
 
+
+
 export default ChatItem;
+

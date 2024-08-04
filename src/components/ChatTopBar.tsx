@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { X, ChevronDown, ChevronUp, MessageCircleOff, Users, Loader2 } from "lucide-react";
+import { X, ChevronDown, ChevronUp, MessageCircleOff, Users, Loader2, Video } from "lucide-react";
 import { useSelectedChat } from "@/store/useSelectedUser";
 import { useKindeBrowserClient } from "@kinde-oss/kinde-auth-nextjs";
 import { leaveGroup } from '@/action';
@@ -11,6 +11,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/t
 import { useGroupStore } from '../store/groupchatstore';
 import { useToast } from "@/components/ui/use-toast"
 import { unstable_noStore as noStore } from "next/cache";
+
 
 
 
@@ -29,9 +30,10 @@ interface tooltipProps {
 const ChatTopBar = () => {
   noStore();
   const { selectedChat, setSelectedChat } = useSelectedChat();
+  const router = useRouter();
   const { user } = useKindeBrowserClient();
   const [showMembers, setShowMembers] = useState(false);
-  const router = useRouter();
+  
   const currentGroup = useGroupStore(state => state.currentGroup);
   const { toast } = useToast();
   const [isLeaving, setIsLeaving] = useState(false);
@@ -118,11 +120,23 @@ const ChatTopBar = () => {
           />
         </>
       )}
-      <TooltipButton
+
+          
+						
+            <TooltipButton
+            onClick={()=>{router.push("/video-call") }}
+            tooltipContent='Video call'
+            icon={<Video size={20} />}
+          />
+            
+            <TooltipButton
         onClick={handleCloseChat}
         tooltipContent="Close chat"
         icon={<X size={20} />}
       />
+					
+
+     
     </div>
   );
 

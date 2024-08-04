@@ -8,14 +8,13 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
-
-
 model User {
   id           String    @id @unique
   email        String    @unique
   firstName    String
   lastName     String
   profileImage String
+  isActive     Boolean   @default(false)
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
   chats        UserChat[]
@@ -31,7 +30,7 @@ model Chat {
   updatedAt     DateTime    @updatedAt
   isGroupChat   Boolean     @default(false)
   users         UserChat[]
-  messages      Message[]   // One-to-many relationship: messages can be zero or more
+  messages      Message[]   
   groupId       Int?        
   group         Group?      @relation(fields: [groupId], references: [id])
 }

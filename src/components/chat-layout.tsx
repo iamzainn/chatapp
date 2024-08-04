@@ -33,11 +33,8 @@ export function ChatLayout({
   groups
 }: ChatLayoutProps) {
   const [isCollapsed, setIsCollapsed] = React.useState(defaultCollapsed);
-
   const [isMobile, setIsMobile] = useState(false);
    const {selectedChat} =useSelectedChat();
-
-  
 
   useEffect(() => {
     

@@ -478,3 +478,17 @@ export async function promoteToAdmin(userId: string, groupId: number) {
 	}
   }
   
+
+  export async function updateLogoutStatus(userId:string) {
+	if(!userId) {
+		return;
+	}	
+	await prisma.user.update({
+		where: {
+			id: userId
+		},
+		data: {
+			isActive: false
+		}
+	})
+  }

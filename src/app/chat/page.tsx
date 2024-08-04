@@ -15,7 +15,7 @@ import { unstable_noStore as noStore } from "next/cache";
     const chatsPromise = prisma.chat.findMany({
       where: {
         isGroupChat: false,
-        users: {
+        users:{
           some: {
             userId: userId,
           }
@@ -31,6 +31,7 @@ import { unstable_noStore as noStore } from "next/cache";
                 lastName: true,
                 email: true,
                 profileImage: true,
+                isActive: true
               }
             }
           }
@@ -68,6 +69,7 @@ import { unstable_noStore as noStore } from "next/cache";
                 lastName: true,
                 email: true,
                 profileImage: true,
+                isActive: true
               }
             }
           }
@@ -111,6 +113,7 @@ import { unstable_noStore as noStore } from "next/cache";
           lastName: otherUser.lastName,
           email: otherUser.email,
           profileImage: otherUser.profileImage,
+          isActive: otherUser.isActive
         } : undefined,
         lastMessage: lastMessage ? {
           content: lastMessage.content,
@@ -140,6 +143,7 @@ import { unstable_noStore as noStore } from "next/cache";
           lastName: userGroup.user.lastName,
           email: userGroup.user.email,
           profileImage: userGroup.user.profileImage,
+          isActive: userGroup.user.isActive
         })),
         lastMessage: lastMessage ? {
           content: lastMessage.content,
@@ -175,6 +179,7 @@ async function getallusers (myId:string){
         createdAt:true,
         lastName:true,
         profileImage:true,
+        isActive:true
     }
   })
   
@@ -193,7 +198,6 @@ async function getallusers (myId:string){
     if(!user){
         redirect('/')
     }
-
 
     const layout = cookies().get("react-resizable-panels:layout");
     const defaultLayout = layout ? JSON.parse(layout.value) : undefined;
