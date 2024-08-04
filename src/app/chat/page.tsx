@@ -44,6 +44,7 @@ import { unstable_noStore as noStore } from "next/cache";
             content: true,
             createdAt: true,
             senderId: true,
+            type: true
           }
         }
       }
@@ -83,6 +84,7 @@ import { unstable_noStore as noStore } from "next/cache";
                 content: true,
                 createdAt: true,
                 senderId: true,
+                type: true
               }
             }
           }
@@ -114,6 +116,7 @@ import { unstable_noStore as noStore } from "next/cache";
           content: lastMessage.content,
           createdAt: lastMessage.createdAt,
           senderId: lastMessage.senderId,
+          type: lastMessage.type
         } : undefined
       };
     });
@@ -142,6 +145,7 @@ import { unstable_noStore as noStore } from "next/cache";
           content: lastMessage.content,
           createdAt: lastMessage.createdAt,
           senderId: lastMessage.senderId,
+          type: lastMessage.type
         } : undefined
       };
     });

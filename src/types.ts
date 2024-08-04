@@ -7,7 +7,6 @@ type User = {
 };
 
 type Message = {
- 
   id: number;
   content: string;
   createdAt: Date;
@@ -28,6 +27,7 @@ type Chat = {
     content: string;
     createdAt: Date;
     senderId: string;
+    type: 'text' | 'image' | 'video';
   };
 };
 
@@ -45,6 +45,7 @@ type Group = {
     content: string;
     createdAt: Date;
     senderId: string;
+    type:'text' | 'image' | 'video'
   };
 };
 
