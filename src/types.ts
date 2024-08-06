@@ -1,21 +1,21 @@
-type User = {
-  id: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  isActive:boolean
-  profileImage: string;
-};
+// type User = {
+//   id: string;
+//   firstName: string;
+//   lastName: string;
+//   email: string;
+//   isActive:boolean
+//   profileImage: string;
+// };
 
-type Message = {
-  id: number;
-  content: string;
-  createdAt: Date;
-  updatedAt: Date;
-  senderId: string;
-  chatId: number;
-  type: 'text' | 'image' | 'video';
-};
+// type Message = {
+//   id: number;
+//   content: string;
+//   createdAt: Date;
+//   updatedAt: Date;
+//   senderId: string;
+//   chatId: number;
+//   type: 'text' | 'image' | 'video';
+// };
 
 type Chat = {
   id: number;
