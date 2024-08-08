@@ -10,77 +10,62 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { ImageIcon, MessageSquareDiff, UserPlus, Search, User, MessageCircle } from "lucide-react";
+import { ImageIcon, MessageSquareDiff, UserPlus, Search, MessageCircle, User as UserIcon } from "lucide-react";
 import { Input } from "./ui/input";
 import { Button } from "./ui/button";
-import { getOrCreateChat, getOrCreateGroup } from "@/action";
-import { useSelectedChat } from "@/store/useSelectedUser";
-import { supabase } from "@/lib/db";
 
-export const UserListDialog = ({ users }: { users: User[] }) => {
+import { useSelectedChat } from "@/store/useSelectedChat";
+import { supabase } from "@/lib/db";
+import { User } from "@/convexlibs/dbtypes";
+import { Id } from "../../convex/_generated/dataModel";
+
+export const UserListDialog = ({ users }: { users:User[]  }) => {
   const [groupName, setGroupName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [renderedImage, setRenderedImage] = useState("");
-  const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
+  const [selectedUsers, setSelectedUsers] = useState<Id<"users">[]>([]); 
   const [searchQuery, setSearchQuery] = useState("");
   const { setSelectedChat } = useSelectedChat();
   const imgRef = useRef<HTMLInputElement>(null);
   const dialogCloseRef = useRef<HTMLButtonElement>(null);
   const [searchTerm, setSearchTerm] = useState("");
 
-    const UploadImage = async()=>{
-    const { data, error } = await supabase.storage
-    .from("chatappbucket")
-    .upload("public/" + selectedImage?.name, selectedImage as File);
 
-
-    if (data) {
-      console.log(JSON.stringify(data,null,2));
-      return `https://socjukiensqxpqzbcjln.supabase.co/storage/v1/object/public/${data.fullPath}`
-    } else if (error) {
-      console.log(error);
-    }
-    };
 	
-	const handleCreateConversation = async () => {
+	// const handleCreateConversation = async () => {
 	
-		setIsLoading(true);
-		 try {
-		  if(selectedUsers.length < 0){
-            throw new Error("unable to create chat");
-          }	
-          if(selectedUsers.length==1){
-            const receieverId = selectedUsers[0];
-            const newChat= await getOrCreateChat(receieverId);
-            setSelectedChat(newChat as unknown as Chat);
-            return;
-          }
-		  if(selectedUsers.length>1){  
-           const grpimgUrl = await UploadImage() || "" ;
-           const result = await getOrCreateGroup(selectedUsers,groupName,grpimgUrl);
-        //    setSelectedChat(result.chats[0] as unknown as Chat);
-           return
-          }
+	// 	setIsLoading(true);
+	// 	 try {
+	// 	  if(selectedUsers.length < 0){
+  //           throw new Error("unable to create chat");
+  //         }	
+  //         if(selectedUsers.length==1){
+  //           const receieverId = selectedUsers[0];
+  //           const newChat= await getOrCreateChat(receieverId);
+  //           setSelectedChat(newChat as unknown as Chat);
+  //           return;
+  //         }
+	// 	  if(selectedUsers.length>1){  
+  //          const grpimgUrl = await UploadImage() || "" ;
+  //          const result = await getOrCreateGroup(selectedUsers,groupName,grpimgUrl);
+  //       //    setSelectedChat(result.chats[0] as unknown as Chat);
+  //          return
+  //         }
 			
-		} catch (err) {
+	// 	} catch (err) {
 			
-		} finally {
-			setIsLoading(false); 
-		}
-	};
+	// 	} finally {
+	// 		setIsLoading(false); 
+	// 	}
+	// };
 
-	useEffect(() => {
-		if (!selectedImage) return setRenderedImage("");
-		const reader = new FileReader();
-		reader.onload = (e) => setRenderedImage(e.target?.result as string);
-		reader.readAsDataURL(selectedImage);
-	}, [selectedImage]);
+
 
 	const filteredUsers = searchTerm
     ? users.filter(
         (user) =>
-          user.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          user.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
           user.email.toLowerCase().includes(searchTerm.toLowerCase())
       )
     : [];
@@ -159,31 +144,31 @@ export const UserListDialog = ({ users }: { users: User[] }) => {
             {filteredUsers.length > 0 ? (
               filteredUsers.map((user) => (
                 <div
-                  key={user.id}
+                  key={user._id}
                   className={`flex gap-3 items-center p-3 rounded-lg cursor-pointer transition-all duration-200 ease-in-out ${
-                    selectedUsers.includes(user.id)
+                    selectedUsers.includes(user._id)
                       ? "bg-green-100 dark:bg-green-900"
                       : "hover:bg-gray-100 dark:hover:bg-gray-800"
                   }`}
                   onClick={() => {
-                    if (selectedUsers.includes(user.id)) {
-                      setSelectedUsers(selectedUsers.filter((id) => id !== user.id));
+                    if (selectedUsers.includes(user._id)) {
+                      setSelectedUsers(selectedUsers.filter((id) => id !== user._id));
                     } else {
-                      setSelectedUsers([...selectedUsers, user.id]);
+                      setSelectedUsers([...selectedUsers, user._id]);
                     }
                   }}
                 >
                   <Avatar className="h-10 w-10">
-                    <AvatarImage src={user.profileImage} alt={user.firstName || user.email.split("@")[0]} />
-                    <AvatarFallback>{user.firstName?.[0] || user.email[0].toUpperCase()}</AvatarFallback>
+                    <AvatarImage src={user.profileImage} alt={user.name || user.email.split("@")[0]} />
+                    <AvatarFallback>{user.name?.[0] || user.email[0].toUpperCase()}</AvatarFallback>
                   </Avatar>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-gray-900 truncate dark:text-white">
-                      {user.firstName || user.email.split("@")[0]}
+                      {user.name || user.email.split("@")[0]}
                     </p>
                     <p className="text-sm text-gray-500 truncate dark:text-gray-400">{user.email}</p>
                   </div>
-                  {selectedUsers.includes(user.id) && (
+                  {selectedUsers.includes(user._id) && (
                     <div className="flex-shrink-0">
                       <span className="inline-block h-6 w-6 rounded-full bg-green-600 text-white text-center leading-6">
                         ✓
@@ -194,7 +179,7 @@ export const UserListDialog = ({ users }: { users: User[] }) => {
               ))
             ) : (
               <div className="col-span-full flex flex-col items-center justify-center text-gray-500 py-8">
-                <User size={48} className="mb-2" />
+                <UserIcon size={48} className="mb-2" />
                 <p className="text-center">
                   {searchTerm
                     ? "No users found. Try a different search term."
@@ -210,7 +195,7 @@ export const UserListDialog = ({ users }: { users: User[] }) => {
             Cancel
           </Button>
           <Button type="submit"
-            onClick={handleCreateConversation}
+            onClick={()=>{}}
             disabled={selectedUsers.length === 0 || (selectedUsers.length > 1 && !groupName) || isLoading}
             className="bg-green-600 hover:bg-green-700 text-white"
           >

@@ -1,50 +1,64 @@
 import React, { forwardRef } from 'react';
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
-import { LogOut } from "lucide-react";
-import { useSelectedChat } from "@/store/useSelectedUser";
-import { useKindeBrowserClient } from "@kinde-oss/kinde-auth-nextjs";
+import { useSelectedChat } from "@/store/useSelectedChat";
+import { useQuery,useConvexAuth } from "convex/react";
+import { api } from "../../convex/_generated/api";
+
 import UserListDialog from "./userlistDialogue";
 import { LogoutLink } from "@kinde-oss/kinde-auth-nextjs/components";
 import ChatItem from './ChatItem';
 import GroupItem from './GroupItem';
 import { useGroupStore } from '../store/groupchatstore';
-import { Skeleton } from './ui/skeleton';
 import { updateLogoutStatus } from '@/action';
+import { Skeleton } from './ui/skeleton';
+import { ChatData, User,OneOnOneChat,GroupChat } from '@/convexlibs/dbtypes';
+import { UserButton } from '@clerk/nextjs';
+
 
 interface SidebarProps {
   isCollapsed: boolean;
-  chats: Chat[];
-  users: User[];
-  groups: Group[];
 }
 
-const Sidebar = forwardRef<HTMLDivElement, SidebarProps>(({ isCollapsed, chats, users, groups }, ref) => {
+const Sidebar = forwardRef<HTMLDivElement, SidebarProps>(({ isCollapsed }, ref) => {
   const { selectedChat, setSelectedChat } = useSelectedChat();
-  const { user,isLoading } = useKindeBrowserClient();
-  const { setCurrentGroup } = useGroupStore();
+ 
+  const { isAuthenticated, isLoading } = useConvexAuth();
+  const chatsData:ChatData = useQuery(api.chats.getUserChats,isAuthenticated?undefined:'skip');
+  const users:User[] | undefined = useQuery(api.users.getUsers,isAuthenticated?undefined:'skip');
+  const   UserChats  = chatsData ?  chatsData.user1v1chats:[]; 
+  const   UserGroupsChats = chatsData ? chatsData.usergroupschats: [];
 
-  const handleChatClick = (chat: Chat) => {
-    setSelectedChat(chat);
-  };
 
 
-  if(isLoading) return <Skeleton/>
 
-  const handleGroupClick = (group: Group) => {
-    setCurrentGroup(group);
-    const groupChat: Chat = {
-      id: group.groupchatId,
-      isGroupChat: true,
-      createdAt: group.createdAt,
-      updatedAt: group.updatedAt,
-      users: group.users,
-      lastMessage: group.lastMessage,
-    };
-    setSelectedChat(groupChat);
-  };
+  
+
+
+
+
+  if (isLoading) {
+  <Skeleton></Skeleton>
+  }
+
+  // const handleChatClick = (chat: Chat) => {
+  //   setSelectedChat(chat);
+  // };
+
+
+
+  // const handleGroupClick = (group: Group) => {
+  //   setCurrentGroup(group);
+  //   const groupChat: Chat = {
+  //     id: group.groupchatId,
+  //     isGroupChat: true,
+  //     createdAt: group.createdAt,
+  //     updatedAt: group.updatedAt,
+  //     users: group.users,
+  //     lastMessage: group.lastMessage,
+  //   };
+  //   setSelectedChat(groupChat);
+  // };
 
   return (
     <div ref={ref} className="flex flex-col h-full bg-background">
@@ -52,44 +66,46 @@ const Sidebar = forwardRef<HTMLDivElement, SidebarProps>(({ isCollapsed, chats, 
         {!isCollapsed && (
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-2xl font-bold">Chats</h2>
-            <UserListDialog users={users} />
+            <UserListDialog users={users!} />
           </div>
         )}
       </div>
 
       <ScrollArea className="flex-1 px-2">
         <div className="space-y-2">
-          {chats.map((chat, idx) => (
+          {UserChats?.map((chat, idx) => (
             <TooltipProvider key={`chat-${idx}`}>
               <Tooltip delayDuration={0}>
                 <TooltipTrigger asChild>
                   <div>
                     <ChatItem
                       chat={chat}
-                      isSelected={selectedChat?.id === chat.id}
+                      isSelected={selectedChat?._id === chat._id}
                       isCollapsed={isCollapsed}
-                      onClick={handleChatClick}
+                      // onClick={handleChatClick}
+                      onClick={()=>{}}
                     />
                   </div>
                 </TooltipTrigger>
                 {isCollapsed && (
                   <TooltipContent side="right" className="flex items-center gap-4">
-                    {chat.user?.firstName}
+                    {chat.user?.name}
                   </TooltipContent>
                 )}
               </Tooltip>
             </TooltipProvider>
           ))}
-          {groups.map((group, idx) => (
+          {UserGroupsChats?.map((group, idx) => (
             <TooltipProvider key={`group-${idx}`}>
               <Tooltip delayDuration={0}>
                 <TooltipTrigger asChild>
                   <div>
                     <GroupItem
                       group={group}
-                      isSelected={selectedChat?.id === group.groupchatId}
+                      isSelected={selectedChat?._id === group._id}
                       isCollapsed={isCollapsed}
-                      onClick={handleGroupClick}
+                      // onClick={handleGroupClick}
+                      onClick={()=>{}}
                     />
                   </div>
                 </TooltipTrigger>
@@ -106,29 +122,7 @@ const Sidebar = forwardRef<HTMLDivElement, SidebarProps>(({ isCollapsed, chats, 
 
       <div className="mt-auto p-4">
         <div className="flex items-center gap-4">
-          {!isCollapsed && (
-            <>
-              <Avatar>
-                <AvatarImage
-                  src={user?.picture || ""}
-                  alt="avatar"
-                  referrerPolicy="no-referrer"
-                />
-                <AvatarFallback>{user?.given_name?.[0]}</AvatarFallback>
-              </Avatar>
-              <div className="flex-1 min-w-0">
-                <p className="font-medium truncate">{user?.given_name}</p>
-                <p className="text-sm text-gray-500 truncate">{user?.email}</p>
-              </div>
-            </>
-          )}
-          <LogoutLink>
-            <Button onClick={()=>{
-             updateLogoutStatus(user?.id as string);
-            }} variant="ghost" size="icon">
-              <LogOut size={20} />
-            </Button>
-          </LogoutLink>
+          <UserButton></UserButton>
         </div>
       </div>
     </div>

@@ -4,12 +4,13 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { format } from 'date-fns';
 import { Image, Video, FileText } from 'lucide-react';
+import { GroupChat, OneOnOneChat } from '@/convexlibs/dbtypes';
 
 interface ChatItemProps {
-  chat: Chat
+  chat: OneOnOneChat | GroupChat;
   isSelected: boolean;
   isCollapsed: boolean;
-  onClick: (chat: Chat) => void;
+  onClick: (chat: OneOnOneChat | GroupChat) => void;
 }
 
 const ChatItem: React.FC<ChatItemProps> = ({ chat, isSelected, isCollapsed, onClick }) => {
@@ -47,12 +48,13 @@ const ChatItem: React.FC<ChatItemProps> = ({ chat, isSelected, isCollapsed, onCl
   const AvatarWithStatus = () => (
     <div className="relative">
       <Avatar className={cn("shrink-0", isCollapsed && "cursor-pointer hover:ring-2 hover:ring-primary transition-all")}>
-        <AvatarImage src={chat.user?.profileImage || ""} alt="User Image" />
-        <AvatarFallback>{chat.user?.firstName?.[0]}</AvatarFallback>
+        {/* <AvatarImage src={chat.user?.profileImage || ""} alt="User Image" />
+        <AvatarFallback>{chat.user?.firstName?.[0]}</AvatarFallback> */}
+        
       </Avatar>
-      {chat.user?.isActive && (
+      {/* {chat.user?.isActive && (
         <span className="absolute bottom-0 right-0 block h-2.5 w-2.5 rounded-full bg-green-500 ring-2 ring-white" />
-      )}
+      )} */}
     </div>
   );
 
@@ -72,8 +74,8 @@ const ChatItem: React.FC<ChatItemProps> = ({ chat, isSelected, isCollapsed, onCl
     >
       <AvatarWithStatus />
       <div className="flex flex-col items-start overflow-hidden w-full">
-        <span className="font-medium truncate w-full">{chat.user?.firstName}</span>
-        {renderLastMessage(chat.lastMessage)}
+        {/* <span className="font-medium truncate w-full">{chat.user?.firstName}</span> */}
+        {/* {renderLastMessage(chat.lastMessage)} */}
       </div>
     </Button>
   );

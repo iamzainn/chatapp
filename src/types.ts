@@ -17,43 +17,43 @@
 //   type: 'text' | 'image' | 'video';
 // };
 
-type Chat = {
-  id: number;
-  isGroupChat: boolean;
-  createdAt: Date;
-  updatedAt: Date;
-  user?: User; // for non-group chats
-  users?:User[], // for group chats
-  lastMessage?: {
-    content: string;
-    createdAt: Date;
-    senderId: string;
-    type: 'text' | 'image' | 'video';
-  };
-};
+// type Chat = {
+//   id: number;
+//   isGroupChat: boolean;
+//   createdAt: Date;
+//   updatedAt: Date;
+//   user?: User; // for non-group chats
+//   users?:User[], // for group chats
+//   lastMessage?: {
+//     content: string;
+//     createdAt: Date;
+//     senderId: string;
+//     type: 'text' | 'image' | 'video';
+//   };
+// };
 
-type Group = {
-  id: number;
-  name: string;
-  image: string;
-  createdAt: Date;
-  updatedAt: Date;
-  groupAdminId: string | null;
-  numberOfMembers: number;
-  users: User[];
-  groupchatId:number,
-  lastMessage?: {
-    content: string;
-    createdAt: Date;
-    senderId: string;
-    type:'text' | 'image' | 'video'
-  };
-};
+// type Group = {
+//   id: number;
+//   name: string;
+//   image: string;
+//   createdAt: Date;
+//   updatedAt: Date;
+//   groupAdminId: string | null;
+//   numberOfMembers: number;
+//   users: User[];
+//   groupchatId:number,
+//   lastMessage?: {
+//     content: string;
+//     createdAt: Date;
+//     senderId: string;
+//     type:'text' | 'image' | 'video'
+//   };
+// };
 
-type ChatResponse = {
-  groups: Group[];
-  chats: Chat[];
-};
+// type ChatResponse = {
+//   groups: Group[];
+//   chats: Chat[];
+// };
 
 
 
@@ -63,23 +63,23 @@ type SignedURLResponse = Promise<
 >
 
 
-type SendMessageResult = {
-  success: boolean;
-  messages: Message[];
-};
+// type SendMessageResult = {
+//   success: boolean;
+//   messages: Message[];
+// };
 
-interface GroupMetadata {
-  id: number;
-  name: string;
-  image: string;
-  users: User[];
-  adminId: string | null;
-  createdAt: Date;
-  updatedAt: Date;
-}
+// interface GroupMetadata {
+//   id: number;
+//   name: string;
+//   image: string;
+//   users: User[];
+//   adminId: string | null;
+//   createdAt: Date;
+//   updatedAt: Date;
+// }
 
-interface GroupStore {
-  currentGroup: GroupMetadata | null;
-  setCurrentGroup: (group: Group) => void;
-  clearCurrentGroup: () => void;
-}
+// interface GroupStore {
+//   currentGroup: GroupMetadata | null;
+//   setCurrentGroup: (group: Group) => void;
+//   clearCurrentGroup: () => void;
+// }
