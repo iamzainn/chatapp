@@ -9,6 +9,8 @@ import {
 } from "@/components/ui/resizable";
 import { cn } from "@/lib/utils";
 import Sidebar from "./Sidebar";
+import { useSelectedChat } from "@/store/useSelectedChat";
+import MessageContainer from "./MessageContainer";
 
 
 
@@ -27,6 +29,7 @@ export default function ChatLayout({
   const [isCollapsed, setIsCollapsed] = React.useState(defaultCollapsed);
  
   const [isMobile, setIsMobile] = useState(false);
+  const {selectedChat} = useSelectedChat();
  
 
   useEffect(() => {
@@ -87,6 +90,15 @@ export default function ChatLayout({
       </ResizablePanel>
       <ResizableHandle withHandle />
       <ResizablePanel defaultSize={defaultLayout[1]} minSize={30}>
+      {!selectedChat && (
+					<div className='flex justify-center items-center h-full w-full px-10'>
+						<div className='flex flex-col justify-center items-center gap-4'>
+							<img src='/logo.png' alt='Logo' className='w-full md:w-2/3 lg:w-1/2' />
+							<p className='text-muted-foreground text-center'>Click on a chat to view the messages</p>
+						</div>
+					</div>
+				)}
+				{selectedChat && <MessageContainer />}
       </ResizablePanel>
     </ResizablePanelGroup>
   );

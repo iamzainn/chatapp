@@ -4,10 +4,11 @@ import { Loader2, Paperclip, SendHorizontal, ThumbsUp, X } from "lucide-react";
 import EmojiPicker from "../components/EmojiPicker";
 import { Button } from "../components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../components/ui/dialog";
-import { getSignedURL, sendMessageAction } from "@/action";
-import { useSelectedChat } from "@/store/useSelectedUser";
+import { getSignedURL } from "@/action";
+import { useSelectedChat } from "@/store/useSelectedChat";
 import { cn } from "@/lib/utils";
 import { Textarea } from "./ui/textarea";
+import { toast } from "./ui/use-toast";
 
 const ChatBottomBar: React.FC = () => {
   const [message, setMessage] = useState("");
@@ -15,7 +16,7 @@ const ChatBottomBar: React.FC = () => {
   const [file, setFile] = useState<File | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const { selectedChat,addMessage } = useSelectedChat();
+  const { selectedChat } = useSelectedChat();
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   useEffect(() => {
@@ -59,7 +60,7 @@ const ChatBottomBar: React.FC = () => {
 		}
 	  
 		const { url } = signedURLResult.success
-		console.log({url})
+		
 		
 		try{
 		
@@ -73,7 +74,6 @@ const ChatBottomBar: React.FC = () => {
 		  console.log(res);
 		  return res.url;
 	
-  
 		}catch(e){
 		console.log(e);
 		}
@@ -87,31 +87,20 @@ const ChatBottomBar: React.FC = () => {
     setIsLoading(true);
     
     try {
-      const isGroupChat = selectedChat?.isGroupChat ?? false;
-      const hasAnyFile = !!file;
-      const chatId = selectedChat?.id as number;
-      const messageContent = content ?? message;
-      let fileUrl = "";
-      const fileType = hasAnyFile ? file?.type : "";
-
-      if (hasAnyFile) {
-        fileUrl = await createFileUrl(file);
-      }
-      const result = await sendMessageAction(chatId, isGroupChat, hasAnyFile, messageContent, fileUrl, fileType);
-    if (result.success) {
-      result.messages.forEach(message => {
-        addMessage(message);
-      });
-    }
-      setMessage("");
-      setFile(null);
-      setPreviewUrl(null);
-      resetTextareaHeight();
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setIsLoading(false);
-    }
+     
+      
+  
+  }
+  catch (error) {
+    console.error('Failed to send message:', error);
+    toast({
+      title: "Error",
+      description: "Failed to send message. Please try again.",
+      variant: "destructive",
+    });
+  } finally {
+    setIsLoading(false);
+  }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {

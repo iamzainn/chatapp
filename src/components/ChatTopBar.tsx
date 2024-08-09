@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { X, ChevronDown, ChevronUp, MessageCircleOff, Users, Loader2, Video } from "lucide-react";
-import { useSelectedChat } from "@/store/useSelectedUser";
+import { useSelectedChat } from "@/store/useSelectedChat";
 import { useKindeBrowserClient } from "@kinde-oss/kinde-auth-nextjs";
 import { leaveGroup } from '@/action';
 import { Button } from './ui/button';
@@ -34,20 +34,20 @@ const ChatTopBar = () => {
   const { user } = useKindeBrowserClient();
   const [showMembers, setShowMembers] = useState(false);
   
-  const currentGroup = useGroupStore(state => state.currentGroup);
+  // const currentGroup = useGroupStore(state => state.currentGroup);
   const { toast } = useToast();
   const [isLeaving, setIsLeaving] = useState(false);
 
   if (!selectedChat) return null;
 
   const isGroupChat = selectedChat.isGroupChat;
-  const chatDetails = isGroupChat ? currentGroup : null;
+  // const chatDetails = isGroupChat ? currentGroup : null;
 
   const handleLeaveGroup = async () => {
-    if (!isGroupChat || !user?.id || !currentGroup?.id) return;
+    // if (!isGroupChat || !user?.id || !currentGroup?.id) return;
     setIsLeaving(true);
     try {
-      await leaveGroup(user.id, currentGroup.id);
+      // await leaveGroup(user.id, currentGroup.id);
       setSelectedChat(null);
       toast({
         title: "Success",
@@ -78,7 +78,7 @@ const ChatTopBar = () => {
      
       {isGroupChat ? (
         <AvatarImage
-          src={chatDetails?.image}
+          // src={chatDetails?.image}
           alt={isGroupChat ? "Group Image" : "User Image"}
         />
       ) : (
@@ -87,18 +87,18 @@ const ChatTopBar = () => {
           alt={isGroupChat ? "Group Image" : "User Image"}
         />
       )}
-      <AvatarFallback>{chatDetails?.name?.[0]}</AvatarFallback>
+      {/* <AvatarFallback>{chatDetails?.name?.[0]}</AvatarFallback> */}
     </Avatar>
   );
   
   const renderChatInfo = () => (
     <div className="flex flex-col">
-      <span className="font-semibold text-lg">{isGroupChat?chatDetails?.name: selectedChat.user?.firstName}</span>
+      {/* <span className="font-semibold text-lg">{isGroupChat?chatDetails?.name: selectedChat.user?.firstName}</span>
       {isGroupChat && currentGroup?.users && (
         <span className="text-sm text-muted-foreground">
           {currentGroup.users.length} members
         </span>
-      )}
+      )} */}
     </div>
   );
 
@@ -149,13 +149,13 @@ const ChatTopBar = () => {
         </div>
         {renderActionButtons()}
       </div>
-      {isGroupChat && showMembers && currentGroup?.users && (
-        <GroupMembersList 
-          users={currentGroup.users} 
-          adminId={currentGroup.adminId as string} 
-          groupId={currentGroup.id} 
-        />
-      )}
+      {/* {isGroupChat && showMembers && currentGroup?.users && ( */}
+        {/* <GroupMembersList 
+          // users={currentGroup.users} 
+          // adminId={currentGroup.adminId as string} 
+          // groupId={currentGroup.id} 
+        /> */}
+      
     </div>
   );
 };

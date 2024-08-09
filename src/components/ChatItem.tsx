@@ -46,8 +46,8 @@ const ChatItem: React.FC<ChatItemProps> = ({ chat, isSelected, isCollapsed, onCl
   };
 
   const AvatarWithStatus = ({ user }: { user: User | null }) => (
-    <div className="relative">
-      <Avatar className={cn("shrink-0", isCollapsed && "cursor-pointer hover:ring-2 hover:ring-primary transition-all")}>
+    <div className="relative" onClick={() => onClick(chat)}>
+      <Avatar className={cn("shrink-0", isCollapsed && "cursor-pointer hover:ring-2 hover:ring-primary transition-all size-8")}>
         <AvatarImage src={user?.profileImage || ""} alt={user?.name || "User"} />
         <AvatarFallback>{user?.name?.[0] || "U"}</AvatarFallback>
       </Avatar>
@@ -63,11 +63,12 @@ const ChatItem: React.FC<ChatItemProps> = ({ chat, isSelected, isCollapsed, onCl
 
   return (
     <Button
+      type='button'
       variant={isSelected ? "default" : "ghost"}
-      size="lg"
+      size="icon"
       className={cn(
         "w-full justify-start gap-4 my-1 p-3 transition-all",
-        isSelected ? "bg-accent shadow-md" : "hover:bg-accent/50"
+        isSelected ? "bg-accent shadow-md text-black hover:dark:bg-white hover:text-black" : "hover:bg-accent/15"
       )}
       onClick={() => onClick(chat)}
     >

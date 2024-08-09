@@ -12,6 +12,7 @@ import { Id } from "../../convex/_generated/dataModel";
 
   
   export type Message= {
+    _id: Id<"messages">;
     content: string;
     createdAt: number;
     senderId: string;
@@ -23,7 +24,7 @@ import { Id } from "../../convex/_generated/dataModel";
     isGroupChat: boolean;
     createdAt: number;
     updatedAt: number;
-    lastMessageId: string | null;
+    lastMessageId: Id<"messages"> | null;
     user: User | null;
     lastMessage: Message | null;
   };
@@ -38,7 +39,7 @@ import { Id } from "../../convex/_generated/dataModel";
     users: User[];
     groupAdminId: string | null;
     numberOfMembers: number;
-    lastMessageId: string | null;
+    lastMessageId: Id<"messages"> | null;
     lastMessage: Message | null;
   };
   
@@ -51,7 +52,7 @@ import { Id } from "../../convex/_generated/dataModel";
     _id: Id<"chats">
     createdAt: number
     updatedAt: number
-    lastMessageId: string | null
+    lastMessageId: Id<"messages"> | null
     lastMessage: Message | null
   } & (
     {

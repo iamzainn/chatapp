@@ -10,7 +10,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { ImageIcon, MessageSquareDiff, UserPlus, Search, MessageCircle, User as UserIcon } from "lucide-react";
+import { ImageIcon, UserPlus, Search, MessageCircle, User as UserIcon } from "lucide-react";
 import { Input } from "./ui/input";
 import { Button } from "./ui/button";
 import { useSelectedChat } from "@/store/useSelectedChat";
@@ -26,20 +26,14 @@ export const UserListDialog = () => {
   const { isAuthenticated, isLoading: authLoading } = useConvexAuth();
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [renderedImage, setRenderedImage] = useState("");
-  const [selectedUsers, setSelectedUsers] = useState<Id<"users">[]>([]); 
-  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedUsers, setSelectedUsers] = useState<Id<"users">[]>([]);
   const { setSelectedChat } = useSelectedChat();
-  const imgRef = useRef<HTMLInputElement>(null);
   const dialogCloseRef = useRef<HTMLButtonElement>(null);
   const [searchTerm, setSearchTerm] = useState("");
-
   const users:User[] | undefined = useQuery(api.users.getUsers,isAuthenticated?undefined:'skip');
   const me : User | undefined = useQuery(api.users.getMe,isAuthenticated?undefined:'skip');
   const createConversation = useMutation(api.chats.createConversation);
-
-
-
-
+  const generateUploadUrl = useMutation(api.chats.generateUploadUrl)
   
 	const handleCreateChat = async () => {
 
@@ -48,31 +42,32 @@ export const UserListDialog = () => {
 		try {
 			const isGroupChat = selectedUsers.length > 1;
 
-			let chatId;
+			let myChat;
 			if (!isGroupChat) {
-				chatId = await createConversation({
+				myChat = await createConversation({
 					participants: [...selectedUsers, me?._id!],
 					isGroupChat,
 				});
        
 
 			} else {
-				// const postUrl = await generateUploadUrl();
 
-				// const result = await fetch(postUrl, {
-				// 	method: "POST",
-				// 	headers: { "Content-Type": selectedImage?.type! },
-				// 	body: selectedImage,
-				// });
+        const postUrl = await generateUploadUrl();
 
-				// const { storageId } = await result.json();
+				const result = await fetch(postUrl, {
+					method: "POST",
+					headers: { "Content-Type": selectedImage?.type! },
+					body: selectedImage,
+				});
 
-				chatId = await createConversation({
+				const { storageId } = await result.json();
+
+				myChat = await createConversation({
 					participants: [...selectedUsers, me?._id!],
 					isGroupChat: true,
 					adminId: me?._id!,
 					groupName,
-					// groupImage: storageId,
+					groupImage: storageId,
 				});
 			}
 
@@ -80,9 +75,7 @@ export const UserListDialog = () => {
 			setSelectedUsers([]);
 			setGroupName("");
 			setSelectedImage(null);
-			// const conversationName = isGroupChat ? groupName : users?.find((user) => user._id === selectedUsers[0])?.name;
-        
-
+      setSelectedChat(myChat);
 
 		} catch (err) {
       toast({

@@ -8,7 +8,7 @@ import UserListDialog from "./UserlistDialogue";
 import ChatItem from './ChatItem';
 import GroupItem from './GroupItem';
 import { Skeleton } from './ui/skeleton';
-import { ChatData, Chat } from '@/convexlibs/dbtypes';
+import { ChatData, Chat, OneOnOneChat, User, GroupChat } from '@/convexlibs/dbtypes';
 import { UserButton } from '@clerk/nextjs';
 
 interface SidebarProps {
@@ -25,18 +25,48 @@ const Sidebar = forwardRef<HTMLDivElement, SidebarProps>(({ isCollapsed }, ref) 
 
   const isLoading = authLoading || (isAuthenticated && !chatsData);
 
-  const handleChatClick = (chat: Chat) => {
-    setSelectedChat(chat);
+  const handleChatClick = (chat: OneOnOneChat) => {
+    console.log("call")
+    if(chat.isGroupChat ==false){
+      const currentChat:Chat = {
+        isGroupChat:false,
+        _id:chat._id,
+        createdAt:chat.createdAt,
+        lastMessage:chat.lastMessage,
+        lastMessageId:chat.lastMessageId,
+        updatedAt:chat.updatedAt,
+        user:chat.user as User,
+       }
+       setSelectedChat(currentChat);
+    }
+   
+  
+        
   };
 
-  useEffect(() => {
-    console.log("Chats Data:", chatsData);
-  }, [chatsData]);
-
+  const handlegroupChatClick = (chat: GroupChat) => {
+  
+  if (chat.isGroupChat) {
+    const currentChat: Chat = {
+      isGroupChat: true,
+      _id: chat._id,
+      numberOfMembers: chat.numberOfMembers,
+      createdAt: chat.createdAt,
+      lastMessage: chat.lastMessage,
+      lastMessageId: chat.lastMessageId,
+      updatedAt: chat.updatedAt,
+      groupAdminId: chat.groupAdminId as string,
+      image: chat.image,
+      name: chat.name,
+      users: chat.users,
+    }
+    setSelectedChat(currentChat);
+  }
+  
+  };
   if (isLoading) {
     return <Skeleton className="h-full w-full" />;
   }
-
   const userChats = chatsData?.user1v1chats || [];
   const userGroupChats = chatsData?.usergroupschats || [];
 
@@ -62,8 +92,8 @@ const Sidebar = forwardRef<HTMLDivElement, SidebarProps>(({ isCollapsed }, ref) 
                       chat={chat}
                       isSelected={selectedChat?._id === chat._id}
                       isCollapsed={isCollapsed}
-                      // onClick={() => handleChatClick(chat)}
-                      onClick={()=>{}}
+                      onClick={() => handleChatClick(chat)}
+                      
                     />
                   </div>
                 </TooltipTrigger>
@@ -84,8 +114,8 @@ const Sidebar = forwardRef<HTMLDivElement, SidebarProps>(({ isCollapsed }, ref) 
                       group={group}
                       isSelected={selectedChat?._id === group._id}
                       isCollapsed={isCollapsed}
-                      // onClick={() => handleChatClick(group)}
-                      onClick={()=>{}}
+                      onClick={() => handlegroupChatClick(group)}
+                      
                     />
                   </div>
                 </TooltipTrigger>
@@ -100,7 +130,7 @@ const Sidebar = forwardRef<HTMLDivElement, SidebarProps>(({ isCollapsed }, ref) 
         </div>
       </ScrollArea>
 
-      <div className="mt-auto p-4">
+      <div className="mt-auto p-4 flex">
         <div className="flex items-center gap-4">
           <UserButton />
         </div>

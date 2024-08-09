@@ -4,16 +4,17 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Users, Image, Video, FileText } from "lucide-react";
 import { format } from 'date-fns';
+import { GroupChat, Message } from '@/convexlibs/dbtypes';
 
 interface GroupItemProps {
-  group: Group;
+  group: GroupChat;
   isSelected: boolean;
   isCollapsed: boolean;
-  onClick: (group: Group) => void;
+  onClick: (group: GroupChat) => void;
 }
 
 const GroupItem: React.FC<GroupItemProps> = ({ group, isSelected, isCollapsed, onClick }) => {
-  const renderLastMessage = (lastMessage?: { content: string; createdAt: Date; senderId: string; type?: string }) => {
+  const renderLastMessage = (lastMessage:Message | null) => {
     if (!lastMessage) return null;
 
     const getMessageIcon = () => {
@@ -46,7 +47,7 @@ const GroupItem: React.FC<GroupItemProps> = ({ group, isSelected, isCollapsed, o
 
   if (isCollapsed) {
     return (
-      <Avatar onClick={() => onClick(group)} className="cursor-pointer hover:ring-2 hover:ring-primary transition-all">
+      <Avatar onClick={() => onClick(group)} className="cursor-pointer hover:ring-2 hover:ring-primary transition-all size-8">
         <AvatarImage src={group.image} alt="Group Image" />
         <AvatarFallback>{group.name[0]}</AvatarFallback>
       </Avatar>
@@ -59,7 +60,7 @@ const GroupItem: React.FC<GroupItemProps> = ({ group, isSelected, isCollapsed, o
       size="lg"
       className={cn(
         "w-full justify-start gap-4 my-1 p-3 transition-all",
-        isSelected ? "bg-accent shadow-md" : "hover:bg-accent/50"
+        isSelected ? "bg-accent shadow-md text-black" : "hover:bg-accent/50"
       )}
       onClick={() => onClick(group)}
     >
@@ -69,7 +70,7 @@ const GroupItem: React.FC<GroupItemProps> = ({ group, isSelected, isCollapsed, o
       </Avatar>
       <div className="flex flex-col items-start overflow-hidden w-full">
         <span className="font-medium truncate w-full">{group.name}</span>
-        {renderLastMessage(group.lastMessage)}
+        {renderLastMessage(group.lastMessage) }
       </div>
       <Users size={16} className="ml-auto text-gray-500 shrink-0" />
     </Button>

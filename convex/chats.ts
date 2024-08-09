@@ -62,7 +62,8 @@ export const getUserChats = query({
               numberOfMembers: chat.participants.length,
               lastMessageId: chat.lastMessageId ?? null,
               lastMessage: lastMessage
-                ? {
+                ? { 
+                    _id: lastMessage._id, 
                     content: lastMessage.content,
                     createdAt: lastMessage.createdAt,
                     senderId: lastMessage.senderId,
@@ -96,6 +97,7 @@ export const getUserChats = query({
                 : null,
               lastMessage: lastMessage
                 ? {
+                    _id: lastMessage._id,
                     content: lastMessage.content,
                     createdAt: lastMessage.createdAt,
                     senderId: lastMessage.senderId,
@@ -155,7 +157,7 @@ export const createConversation = mutation({
       return await formatExistingChat(ctx, existingConversation, me._id);
     }
 
-    // Create new conversation
+    
     const newChatData = {
       participants: args.participants,
       isGroupChat: args.isGroupChat,
@@ -178,7 +180,6 @@ export const createConversation = mutation({
         newChatData.image = await ctx.storage.getUrl(args.groupImage) as string;
       }
     }
-
     const newChatId = await ctx.db.insert("chats", newChatData);
     return await formatNewChat(ctx, newChatId, args.isGroupChat, me._id);
   },
@@ -238,9 +239,17 @@ async function formatNewChat(
 
 function formatMessage(message: any): Message {
   return {
+    _id: message._id,
     content: message.content,
     createdAt: message.createdAt,
     senderId: message.senderId,
     type: message.type,
   };
 }
+
+export const generateUploadUrl = mutation(async (ctx) => {
+	return await ctx.storage.generateUploadUrl();
+});
+
+
+
