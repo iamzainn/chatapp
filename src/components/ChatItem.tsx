@@ -3,18 +3,18 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { format } from 'date-fns';
-import { Image, Video, FileText } from 'lucide-react';
-import { GroupChat, OneOnOneChat } from '@/convexlibs/dbtypes';
+import { Image, Video, FileText, MessageSquare } from 'lucide-react';
+import { OneOnOneChat, Message, User } from '@/convexlibs/dbtypes';
 
 interface ChatItemProps {
-  chat: OneOnOneChat | GroupChat;
+  chat: OneOnOneChat;
   isSelected: boolean;
   isCollapsed: boolean;
-  onClick: (chat: OneOnOneChat | GroupChat) => void;
+  onClick: (chat: OneOnOneChat) => void;
 }
 
 const ChatItem: React.FC<ChatItemProps> = ({ chat, isSelected, isCollapsed, onClick }) => {
-  const renderLastMessage = (lastMessage?: { content: string; createdAt: Date; senderId: string; type?: string }) => {
+  const renderLastMessage = (lastMessage: Message | null) => {
     if (!lastMessage) return null;
 
     const getMessageIcon = () => {
@@ -26,7 +26,7 @@ const ChatItem: React.FC<ChatItemProps> = ({ chat, isSelected, isCollapsed, onCl
         case 'file':
           return <FileText size={16} className="mr-1 text-gray-500" />;
         default:
-          return null;
+          return <MessageSquare size={16} className="mr-1 text-gray-500" />;
       }
     };
 
@@ -45,21 +45,20 @@ const ChatItem: React.FC<ChatItemProps> = ({ chat, isSelected, isCollapsed, onCl
     );
   };
 
-  const AvatarWithStatus = () => (
+  const AvatarWithStatus = ({ user }: { user: User | null }) => (
     <div className="relative">
       <Avatar className={cn("shrink-0", isCollapsed && "cursor-pointer hover:ring-2 hover:ring-primary transition-all")}>
-        {/* <AvatarImage src={chat.user?.profileImage || ""} alt="User Image" />
-        <AvatarFallback>{chat.user?.firstName?.[0]}</AvatarFallback> */}
-        
+        <AvatarImage src={user?.profileImage || ""} alt={user?.name || "User"} />
+        <AvatarFallback>{user?.name?.[0] || "U"}</AvatarFallback>
       </Avatar>
-      {/* {chat.user?.isActive && (
+      {user?.isOnline && (
         <span className="absolute bottom-0 right-0 block h-2.5 w-2.5 rounded-full bg-green-500 ring-2 ring-white" />
-      )} */}
+      )}
     </div>
   );
 
   if (isCollapsed) {
-    return <AvatarWithStatus />;
+    return <AvatarWithStatus user={chat.user} />;
   }
 
   return (
@@ -72,16 +71,13 @@ const ChatItem: React.FC<ChatItemProps> = ({ chat, isSelected, isCollapsed, onCl
       )}
       onClick={() => onClick(chat)}
     >
-      <AvatarWithStatus />
+      <AvatarWithStatus user={chat.user} />
       <div className="flex flex-col items-start overflow-hidden w-full">
-        {/* <span className="font-medium truncate w-full">{chat.user?.firstName}</span> */}
-        {/* {renderLastMessage(chat.lastMessage)} */}
+        <span className="font-medium truncate w-full">{chat.user?.name || "Unknown User"}</span>
+        {renderLastMessage(chat.lastMessage)}
       </div>
     </Button>
   );
 };
 
-
-
 export default ChatItem;
-

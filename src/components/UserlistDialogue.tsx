@@ -13,15 +13,17 @@ import {
 import { ImageIcon, MessageSquareDiff, UserPlus, Search, MessageCircle, User as UserIcon } from "lucide-react";
 import { Input } from "./ui/input";
 import { Button } from "./ui/button";
-
 import { useSelectedChat } from "@/store/useSelectedChat";
-import { supabase } from "@/lib/db";
 import { User } from "@/convexlibs/dbtypes";
 import { Id } from "../../convex/_generated/dataModel";
+import { useConvexAuth, useMutation, useQuery } from "convex/react";
+import { api } from "../../convex/_generated/api";
+import { toast } from "./ui/use-toast";
 
-export const UserListDialog = ({ users }: { users:User[]  }) => {
+export const UserListDialog = () => {
   const [groupName, setGroupName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const { isAuthenticated, isLoading: authLoading } = useConvexAuth();
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [renderedImage, setRenderedImage] = useState("");
   const [selectedUsers, setSelectedUsers] = useState<Id<"users">[]>([]); 
@@ -31,39 +33,80 @@ export const UserListDialog = ({ users }: { users:User[]  }) => {
   const dialogCloseRef = useRef<HTMLButtonElement>(null);
   const [searchTerm, setSearchTerm] = useState("");
 
+  const users:User[] | undefined = useQuery(api.users.getUsers,isAuthenticated?undefined:'skip');
+  const me : User | undefined = useQuery(api.users.getMe,isAuthenticated?undefined:'skip');
+  const createConversation = useMutation(api.chats.createConversation);
 
-	
-	// const handleCreateConversation = async () => {
-	
-	// 	setIsLoading(true);
-	// 	 try {
-	// 	  if(selectedUsers.length < 0){
-  //           throw new Error("unable to create chat");
-  //         }	
-  //         if(selectedUsers.length==1){
-  //           const receieverId = selectedUsers[0];
-  //           const newChat= await getOrCreateChat(receieverId);
-  //           setSelectedChat(newChat as unknown as Chat);
-  //           return;
-  //         }
-	// 	  if(selectedUsers.length>1){  
-  //          const grpimgUrl = await UploadImage() || "" ;
-  //          const result = await getOrCreateGroup(selectedUsers,groupName,grpimgUrl);
-  //       //    setSelectedChat(result.chats[0] as unknown as Chat);
-  //          return
-  //         }
-			
-	// 	} catch (err) {
-			
-	// 	} finally {
-	// 		setIsLoading(false); 
-	// 	}
-	// };
+
+
+
+  
+	const handleCreateChat = async () => {
+
+		if (selectedUsers.length === 0) return;
+		setIsLoading(true);
+		try {
+			const isGroupChat = selectedUsers.length > 1;
+
+			let chatId;
+			if (!isGroupChat) {
+				chatId = await createConversation({
+					participants: [...selectedUsers, me?._id!],
+					isGroupChat,
+				});
+       
+
+			} else {
+				// const postUrl = await generateUploadUrl();
+
+				// const result = await fetch(postUrl, {
+				// 	method: "POST",
+				// 	headers: { "Content-Type": selectedImage?.type! },
+				// 	body: selectedImage,
+				// });
+
+				// const { storageId } = await result.json();
+
+				chatId = await createConversation({
+					participants: [...selectedUsers, me?._id!],
+					isGroupChat: true,
+					adminId: me?._id!,
+					groupName,
+					// groupImage: storageId,
+				});
+			}
+
+			dialogCloseRef.current?.click();
+			setSelectedUsers([]);
+			setGroupName("");
+			setSelectedImage(null);
+			// const conversationName = isGroupChat ? groupName : users?.find((user) => user._id === selectedUsers[0])?.name;
+        
+
+
+		} catch (err) {
+      toast({
+        title: "Error",
+        description: "Something went wrong. Please try again later.",
+        variant: "destructive",
+      })
+			console.error(err);
+		} finally {
+			setIsLoading(false);
+		}
+	};
+
+	useEffect(() => {
+		if (!selectedImage) return setRenderedImage("");
+		const reader = new FileReader();
+		reader.onload = (e) => setRenderedImage(e.target?.result as string);
+		reader.readAsDataURL(selectedImage);
+	}, [selectedImage]);
 
 
 
 	const filteredUsers = searchTerm
-    ? users.filter(
+    ? users?.filter(
         (user) =>
           user.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
           user.email.toLowerCase().includes(searchTerm.toLowerCase())
@@ -141,8 +184,8 @@ export const UserListDialog = ({ users }: { users:User[]  }) => {
           )}
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-60 overflow-y-auto">
-            {filteredUsers.length > 0 ? (
-              filteredUsers.map((user) => (
+            {filteredUsers  && filteredUsers.length > 0 ? (
+              filteredUsers?.map((user) => (
                 <div
                   key={user._id}
                   className={`flex gap-3 items-center p-3 rounded-lg cursor-pointer transition-all duration-200 ease-in-out ${
@@ -195,7 +238,7 @@ export const UserListDialog = ({ users }: { users:User[]  }) => {
             Cancel
           </Button>
           <Button type="submit"
-            onClick={()=>{}}
+            onClick={handleCreateChat}
             disabled={selectedUsers.length === 0 || (selectedUsers.length > 1 && !groupName) || isLoading}
             className="bg-green-600 hover:bg-green-700 text-white"
           >

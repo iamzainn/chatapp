@@ -13,8 +13,7 @@ export default defineSchema({
 	  .index("by_email", ["email"])
 	  .index("by_tokenIdentifier", ["tokenIdentifier"]),
 
-	  chats: defineTable({
-	  	
+	  chats: defineTable({	
 	  createdAt: v.number(),
 	  updatedAt: v.number(),
 	  isGroupChat: v.boolean(),

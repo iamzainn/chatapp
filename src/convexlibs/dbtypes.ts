@@ -6,9 +6,12 @@ import { Id } from "../../convex/_generated/dataModel";
     email: string;
     profileImage: string;
     isOnline: boolean;
+    tokenIdentifier: string;
+    _creationTime: number;
   };
+
   
-  interface Message {
+  export type Message= {
     content: string;
     createdAt: number;
     senderId: string;
@@ -43,4 +46,24 @@ import { Id } from "../../convex/_generated/dataModel";
     user1v1chats: OneOnOneChat[];
     usergroupschats: GroupChat[];
   };
+
+  export type Chat ={
+    _id: Id<"chats">
+    createdAt: number
+    updatedAt: number
+    lastMessageId: string | null
+    lastMessage: Message | null
+  } & (
+    {
+      isGroupChat: true
+      name: string
+      image: string
+      groupAdminId: string
+      numberOfMembers: number
+      users: User[]
+     } | {
+      isGroupChat: false
+      user: User
+    }
+  )
   

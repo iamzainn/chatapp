@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/resizable";
 import { cn } from "@/lib/utils";
 import Sidebar from "./Sidebar";
-import { ChatData,User } from "@/convexlibs/dbtypes";
+
 
 
 
@@ -87,7 +87,6 @@ export default function ChatLayout({
       </ResizablePanel>
       <ResizableHandle withHandle />
       <ResizablePanel defaultSize={defaultLayout[1]} minSize={30}>
-       
       </ResizablePanel>
     </ResizablePanelGroup>
   );
