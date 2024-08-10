@@ -21,7 +21,6 @@ export const fetchChatMessages = query({
       const messages = await ctx.db
         .query("messages")
         .withIndex("by_chatId", (q) => q.eq("chatId", args.chatId))
-        .order("desc")
         .collect();
 
 

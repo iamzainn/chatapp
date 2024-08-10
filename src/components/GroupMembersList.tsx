@@ -1,94 +1,120 @@
-import React, { useState } from 'react';
-import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar';
-import { Button } from './ui/button';
-import { removeMemberFromGroup, promoteToAdmin } from '../action';
-import { useToast } from "../components/ui/use-toast";
-import { Loader2, UserMinus, UserPlus } from "lucide-react";
+// components/GroupMembersDialog.tsx
+import React from 'react';
+import { useMutation } from 'convex/react';
+import { useToast } from "@/components/ui/use-toast";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Button } from '@/components/ui/button';
+import { Users, UserMinus, UserPlus, Loader2, Router } from "lucide-react";
+import { GroupChat } from '@/convexlibs/dbtypes';
+import { Id } from '../../convex/_generated/dataModel';
+import { api } from '../../convex/_generated/api';
 import { useRouter } from 'next/navigation';
-import { useKindeBrowserClient } from "@kinde-oss/kinde-auth-nextjs";
 
-interface User {
-  id: string;
-  firstName: string;
-  profileImage?: string;
+interface GroupMembersDialogProps {
+  chat: GroupChat;
+  currentUserId: Id<"users">;
 }
 
-interface GML {
-  users: User[];
-  groupId: number;
-  adminId: string;
-}
-
-export const GroupMembersList: React.FC<GML> = ({ users, groupId, adminId }) => {
-  const { toast } = useToast();
+const GroupMembersDialog: React.FC<GroupMembersDialogProps> = ({ chat, currentUserId }) => {
   const router = useRouter();
-  const { user } = useKindeBrowserClient();
-  const [loadingStates, setLoadingStates] = useState<Record<string, boolean>>({});
+  const { toast } = useToast();
+  const removeUser = useMutation(api.chats.removeUserFromGroup);
+  const makeAdmin = useMutation(api.chats.makeUserAdmin);
+//  console.log(currentUserId)
 
-  const isCurrentUserAdmin = user?.id === adminId;
+  const [loading, setLoading] = React.useState<Id<"users"> | null>(null);
 
-  const handleAction = async (action: 'remove' | 'promote', userId: string) => {
-    if (!isCurrentUserAdmin) return;
+  const isAdmin = chat.groupAdminId === currentUserId;
 
-    setLoadingStates(prev => ({ ...prev, [userId]: true }));
+  const handleRemoveUser = async (userId: Id<"users">) => {
+    setLoading(userId);
     try {
-      if (action === 'remove') {
-        await removeMemberFromGroup(userId, groupId);
-        toast({ title: "Success", description: "Member removed from the group." });
-      } else if (action === 'promote') {
-        await promoteToAdmin(userId, groupId);
-        toast({ title: "Success", description: "Member promoted to admin." });
-      }
-      router.refresh(); // Revalidate and update the UI
+      await removeUser({ chatId: chat._id, userId });
+      toast({ title: "User removed from group" });
+       router.refresh()
     } catch (error) {
-      console.error(`Failed to ${action} member:`, error);
-      toast({
-        title: "Error",
-        description: `Failed to ${action} member. Please try again.`,
-        variant: "destructive",
-      });
+      toast({ title: "Failed to remove user", variant: "destructive" });
     } finally {
-      setLoadingStates(prev => ({ ...prev, [userId]: false }));
+      setLoading(null);
+    }
+  };
+
+  const handleMakeAdmin = async (userId: Id<"users">) => {
+    setLoading(userId);
+    try {
+      await makeAdmin({ chatId: chat._id, userId });
+      toast({ title: "User is now an admin" });
+       router.refresh()
+    } catch (error) {
+      toast({ title: "Failed to make user admin", variant: "destructive" });
+    } finally {
+      setLoading(null);
     }
   };
 
   return (
-    <div className="p-4 bg-secondary/5">
-      <h3 className="font-semibold mb-2">Group Members</h3>
-      <ul className="space-y-2">
-        {users.map((user) => (
-          <li key={user.id} className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Avatar className="h-8 w-8">
-                <AvatarImage src={user.profileImage} alt={user.firstName} />
-                <AvatarFallback>{user.firstName[0]}</AvatarFallback>
+    <Dialog>
+      <DialogTrigger asChild>
+        <Button variant="ghost" size="icon">
+          <Users className="h-5 w-5" />
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle>Group Members ({chat.users.length})</DialogTitle>
+        </DialogHeader>
+        <ScrollArea className="h-[60vh] w-full pr-4">
+          {chat.users.map((user) => (
+            <div key={user._id} className="flex items-center space-x-4 py-3 border-b last:border-b-0">
+              <Avatar>
+                <AvatarImage src={user.profileImage} alt={user.name} />
+                <AvatarFallback>{user.name[0]}</AvatarFallback>
               </Avatar>
-              <span>{user.firstName}</span>
-              {user.id === adminId && <span className="text-xs text-muted-foreground ml-2">(Admin)</span>}
-            </div>
-            {isCurrentUserAdmin && user.id !== adminId && (
-              <div className="space-x-2">
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => handleAction('remove', user.id)}
-                  disabled={loadingStates[user.id]}
-                >
-                  {loadingStates[user.id] ? <Loader2 className="animate-spin" size={16} /> : <UserMinus size={16} />}
-                </Button>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => handleAction('promote', user.id)}
-                  disabled={loadingStates[user.id]}
-                >
-                  {loadingStates[user.id] ? <Loader2 className="animate-spin" size={16} /> : <UserPlus size={16} />}
-                </Button>
+              <div className="flex-grow">
+                <p className="font-medium">{user.name}</p>
+                <p className="text-sm text-muted-foreground">{user.email}</p>
               </div>
-            )}
-          </li>
-        ))}
-      </ul>
-    </div>
+              <div className="flex items-center space-x-2">
+                {user.isOnline && (
+                  <Badge variant="secondary" className="px-2 py-1">Active Now</Badge>
+                )}
+                {chat.groupAdminId === user._id && (
+                  <Badge variant="default" className="px-2 py-1">Admin</Badge>
+                )}
+                {isAdmin && user._id !== currentUserId && (
+                  <>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleRemoveUser(user._id)}
+                      disabled={loading === user._id}
+                      className="h-8 w-8"
+                    >
+                      {loading === user._id ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserMinus className="h-4 w-4" />}
+                    </Button>
+                    {chat.groupAdminId !== user._id && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleMakeAdmin(user._id)}
+                        disabled={loading === user._id}
+                        className="h-8 w-8"
+                      >
+                        {loading === user._id ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserPlus className="h-4 w-4" />}
+                      </Button>
+                    )}
+                  </>
+                )}
+              </div>
+            </div>
+          ))}
+        </ScrollArea>
+      </DialogContent>
+    </Dialog>
   );
 };
+
+export default GroupMembersDialog;

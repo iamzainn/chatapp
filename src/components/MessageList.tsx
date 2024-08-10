@@ -16,6 +16,8 @@ const MessageList: React.FC = () => {
   const lastMessageRef = useRef<HTMLDivElement>(null);
   const messageContainerRef = useRef<HTMLDivElement>(null);
 
+  
+
   useEffect(() => {
     if (lastMessageRef.current) {
       lastMessageRef.current.scrollIntoView({ behavior: "smooth" });
@@ -45,6 +47,7 @@ const MessageList: React.FC = () => {
             showSenderInfo={selectedChat.isGroupChat}
             isLastMessage={index === messages.length - 1}
             ref={index === messages.length - 1 ? lastMessageRef : null}
+            me={me!}
           />
         ))}
       </AnimatePresence>

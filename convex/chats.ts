@@ -42,11 +42,10 @@ export const getUserChats = query({
           if (chat.isGroupChat) {
             let groupUsers :User[] =[] as User[]; 
 
-
-            // Process group chat
             chat.participants.forEach(async(id) => {
-                const user = await ctx.db.query("users").filter((q) => q.eq(q.field("_id"), id)).take(1);
-                groupUsers.push(user[0])
+                // const user = await ctx.db.query("users").filter((q) => q.eq(q.field("_id"), id)).take(1);
+                const user = await ctx.db.get(id) as User;
+                groupUsers.push(user);
             })
               
             const groupChat: GroupChat = {
@@ -181,6 +180,8 @@ export const createConversation = mutation({
       }
     }
     const newChatId = await ctx.db.insert("chats", newChatData);
+    console.log("newChatId", newChatId);
+
     return await formatNewChat(ctx, newChatId, args.isGroupChat, me._id);
   },
 });
@@ -197,7 +198,7 @@ async function formatExistingChat(
   if (chat.isGroupChat) {
     const users = await Promise.all(
       chat.participants.map((id: Id<"users">) => ctx.db.get(id))
-    );
+    )
     return {
       _id: chat._id,
       isGroupChat: true,
@@ -249,6 +250,62 @@ function formatMessage(message: any): Message {
 
 export const generateUploadUrl = mutation(async (ctx) => {
 	return await ctx.storage.generateUploadUrl();
+});
+
+
+export const removeUserFromGroup = mutation({
+  args: { chatId: v.id("chats"), userId: v.id("users") },
+  handler: async (ctx, { chatId, userId }) => {
+    // Fetch the chat
+    const chat = await ctx.db.get(chatId);
+    if (!chat) {
+      throw new Error("Chat not found");
+    }
+    if (!chat.isGroupChat) {
+      throw new Error("This is not a group chat");
+    }
+
+    // Check if the user is in the chat
+    if (!chat.participants.includes(userId)) {
+      throw new Error("User is not a member of this chat");
+    }
+
+    // Remove the user from the chat's participants
+    const updatedParticipants = chat.participants.filter(id => id !== userId);
+    
+    // Update the chat
+    await ctx.db.patch(chatId, { 
+      participants: updatedParticipants,
+      updatedAt: Date.now()
+    });
+
+    // If the removed user was the admin and there are still participants, assign a new admin
+    if (chat.adminId === userId && updatedParticipants.length > 0) {
+      const newAdminId = updatedParticipants[0];
+      await ctx.db.patch(chatId, { adminId: newAdminId });
+    }
+
+    // If there are no participants left, delete the chat
+    if (updatedParticipants.length === 0) {
+      await ctx.db.delete(chatId);
+      return { success: true, chatDeleted: true };
+    }
+
+    return { success: true, chatDeleted: false };
+  },
+});
+
+export const makeUserAdmin = mutation({
+  args: { chatId: v.id("chats"), userId: v.id("users") },
+  handler: async (ctx, { chatId, userId }) => {
+    const chat = await ctx.db.get(chatId);
+    if (!chat || !chat.isGroupChat) {
+      throw new Error("Invalid chat");
+    }
+
+    await ctx.db.patch(chatId, { adminId: userId });
+    return { success: true };
+  },
 });
 
 

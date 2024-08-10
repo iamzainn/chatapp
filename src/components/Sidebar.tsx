@@ -23,6 +23,8 @@ const Sidebar = forwardRef<HTMLDivElement, SidebarProps>(({ isCollapsed }, ref) 
     isAuthenticated ? undefined : 'skip'
   );
 
+  // console.log(JSON.stringify(chatsData,null,2))
+
   const isLoading = authLoading || (isAuthenticated && !chatsData);
 
   const handleChatClick = (chat: OneOnOneChat) => {

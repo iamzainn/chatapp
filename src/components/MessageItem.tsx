@@ -10,18 +10,21 @@ interface MessageItemProps {
   isCurrentUser: boolean;
   showSenderInfo: boolean;
   isLastMessage: boolean;
+  me:User;
 }
 
 const MessageItem = forwardRef<HTMLDivElement, MessageItemProps>(
-  ({ message, isCurrentUser, showSenderInfo, isLastMessage }, ref) => {
+  ({ message, isCurrentUser, showSenderInfo, isLastMessage ,me}, ref) => {
     const { selectedChat } = useSelectedChat();
 
     const renderAvatar = (senderId: string) => {
       let user: User | undefined;
       if (selectedChat?.isGroupChat) {
-        user = selectedChat.users.find((u) => u._id === senderId);
+        // console.log("selectedChat : "+JSON.stringify(selectedChat,null,2));
+        user = selectedChat?.users.find((u) => u._id === senderId);
       } else {
-        user = selectedChat?.user;
+        
+         user = selectedChat?.user._id ===senderId ? selectedChat?.user : me;
       }
 
       return (
@@ -77,9 +80,7 @@ const MessageItem = forwardRef<HTMLDivElement, MessageItemProps>(
           {renderAvatar(message.senderId)}
           <div className="flex flex-col">
             {showSenderInfo && !isCurrentUser && (
-            //   <span className="text-xs text-muted-foreground mb-1">
-            //     {selectedChat?.users.find(user => user._id === message.senderId)?.name || 'Unknown User'}
-            //   </span>
+           
             <></>
             )}
             {renderMessageContent()}
