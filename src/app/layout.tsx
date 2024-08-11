@@ -10,7 +10,7 @@ import { Toaster } from "@/components/ui/toaster"
 
 
 import { ThemeProvider } from "@/components/theme-provider"
-import TanStackProvider from "@/components/Tanstack-provider";
+
 import Header from "@/components/Header";
 import ConvexClientProvider from "@/components/ConvexClerkProvider";
 
@@ -47,10 +47,10 @@ export default function RootLayout({
           >
             
 
-            <TanStackProvider>
+            
               <Header></Header>
             {children} 
-            </TanStackProvider>
+            
             </ThemeProvider>
             <Toaster />
         </body>

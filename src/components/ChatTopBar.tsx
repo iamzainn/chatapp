@@ -3,14 +3,12 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { X, Video } from "lucide-react";
 import { useSelectedChat } from "@/store/useSelectedChat";
 import { Button } from '@/components/ui/button';
-import { useRouter } from 'next/navigation';
+
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useToast } from "@/components/ui/use-toast";
 import { useUser } from '@clerk/nextjs';
 import GroupMembersDialog from './GroupMembersList';
-import { Id } from '../../convex/_generated/dataModel';
-import { useQuery } from 'convex/react';
-import { api } from '../../convex/_generated/api';
+
 import { User } from '@/convexlibs/dbtypes';
 
 

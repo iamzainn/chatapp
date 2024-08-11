@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from "react";
 
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence } from "framer-motion";
 import { useSelectedChat } from "@/store/useSelectedChat";
 
 import { useQuery } from "convex/react";

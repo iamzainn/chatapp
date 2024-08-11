@@ -7,8 +7,6 @@ import { cn } from '@/lib/utils';
 import { ModeToggle } from './Theme-toggle';
 import Auth from './Auth';
 
-import { Menu } from 'lucide-react';
-import { Button } from './ui/button';
 
 
 const Header = () => {

@@ -1,4 +1,4 @@
-import React, { forwardRef, useEffect } from 'react';
+import React, { forwardRef } from 'react';
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useSelectedChat } from "@/store/useSelectedChat";
@@ -23,7 +23,7 @@ const Sidebar = forwardRef<HTMLDivElement, SidebarProps>(({ isCollapsed }, ref) 
     isAuthenticated ? undefined : 'skip'
   );
 
-  // console.log(JSON.stringify(chatsData,null,2))
+ 
 
   const isLoading = authLoading || (isAuthenticated && !chatsData);
 
@@ -47,7 +47,7 @@ const Sidebar = forwardRef<HTMLDivElement, SidebarProps>(({ isCollapsed }, ref) 
   };
 
   const handlegroupChatClick = (chat: GroupChat) => {
-  console.log("call",chat);
+  
     if (chat.isGroupChat) {
     const currentChat: Chat = {
       isGroupChat: true,
