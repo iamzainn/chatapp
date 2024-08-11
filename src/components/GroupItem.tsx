@@ -2,7 +2,7 @@ import React from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { Users, Image, Video, FileText } from "lucide-react";
+import { Users, Image, Video, FileText, MessageSquare, Check } from "lucide-react";
 import { format } from 'date-fns';
 import { GroupChat, Message } from '@/convexlibs/dbtypes';
 
@@ -11,22 +11,23 @@ interface GroupItemProps {
   isSelected: boolean;
   isCollapsed: boolean;
   onClick: (group: GroupChat) => void;
+  currentUserId: string;
 }
 
-const GroupItem: React.FC<GroupItemProps> = ({ group, isSelected, isCollapsed, onClick }) => {
-  const renderLastMessage = (lastMessage:Message | null) => {
+const GroupItem: React.FC<GroupItemProps> = ({ group, isSelected, isCollapsed, onClick , currentUserId}) => {
+  const renderLastMessage = (lastMessage: Message | null) => {
     if (!lastMessage) return null;
 
     const getMessageIcon = () => {
       switch (lastMessage.type) {
         case 'image':
-          return <Image size={16} className="mr-1 text-gray-500" />;
+          return <Image size={14} className="mr-1 text-muted-foreground" />;
         case 'video':
-          return <Video size={16} className="mr-1 text-gray-500" />;
+          return <Video size={14} className="mr-1 text-muted-foreground" />;
         case 'file':
-          return <FileText size={16} className="mr-1 text-gray-500" />;
+          return <FileText size={14} className="mr-1 text-muted-foreground" />;
         default:
-          return null;
+          return <MessageSquare size={14} className="mr-1 text-muted-foreground" />;
       }
     };
 
@@ -34,45 +35,65 @@ const GroupItem: React.FC<GroupItemProps> = ({ group, isSelected, isCollapsed, o
       ? `${lastMessage.content.substring(0, 20)}...`
       : lastMessage.content;
 
+    const isMyMessage = lastMessage.senderId === currentUserId;
+
     return (
-      <div className="text-sm text-gray-500 flex justify-between items-center w-full">
-        <span className="flex items-center">
+      <div className="text-xs text-muted-foreground flex justify-between items-center w-full">
+        <span className="flex items-center space-x-1 truncate">
           {getMessageIcon()}
           <span className="truncate">{truncatedContent}</span>
         </span>
-        <span className="text-xs ml-2 shrink-0">{format(new Date(lastMessage.createdAt), 'HH:mm')}</span>
+        <div className="flex items-center space-x-1 shrink-0">
+          {isMyMessage && (
+            <div className="flex">
+              <Check size={12} className="text-blue-500" />
+              <Check size={12} className="text-blue-500 -ml-1" />
+            </div>
+          )}
+          <span className="text-[10px]">{format(new Date(lastMessage.createdAt), 'HH:mm')}</span>
+        </div>
+        {/* <span className="text-[10px] shrink-0">{format(new Date(lastMessage.createdAt), 'HH:mm')}</span> */}
       </div>
     );
   };
 
+  const GroupAvatar = () => (
+    <Avatar className={cn(
+      "shrink-0 transition-all",
+      isCollapsed && "cursor-pointer hover:ring-2 hover:ring-primary size-7",
+      !isCollapsed && "size-9"
+    )}>
+      <AvatarImage src={group.image} alt={group.name} />
+      <AvatarFallback>{group.name[0]}</AvatarFallback>
+    </Avatar>
+  );
+
   if (isCollapsed) {
     return (
-      <Avatar onClick={() => onClick(group)} className="cursor-pointer hover:ring-2 hover:ring-primary transition-all size-8">
-        <AvatarImage src={group.image} alt="Group Image" />
-        <AvatarFallback>{group.name[0]}</AvatarFallback>
-      </Avatar>
+      <div className="flex justify-center my-2" onClick={() => onClick(group)}>
+        <GroupAvatar />
+      </div>
     );
   }
 
   return (
     <Button
-      variant={isSelected ? "default" : "ghost"}
-      size="lg"
+      type='button'
+      variant="ghost"
+      size="sm"
       className={cn(
-        "w-full justify-start gap-4 my-1 p-3 transition-all",
-        isSelected ? "bg-accent shadow-md text-black" : "hover:bg-accent/50"
+        "w-full justify-start gap-3 my-1 p-2 transition-all",
+        isSelected ? "bg-accent text-accent-foreground" : "hover:bg-accent/10 dark:hover:bg-accent/20",
+        "dark:text-foreground"
       )}
       onClick={() => onClick(group)}
     >
-      <Avatar className="shrink-0">
-        <AvatarImage src={group.image} alt="Group Image" />
-        <AvatarFallback>{group.name[0]}</AvatarFallback>
-      </Avatar>
+      <GroupAvatar />
       <div className="flex flex-col items-start overflow-hidden w-full">
-        <span className="font-medium truncate w-full">{group.name}</span>
-        {renderLastMessage(group.lastMessage) }
+        <span className="font-medium text-sm truncate w-full">{group.name}</span>
+        {renderLastMessage(group.lastMessage)}
       </div>
-      <Users size={16} className="ml-auto text-gray-500 shrink-0" />
+      <Users size={14} className="ml-auto text-muted-foreground shrink-0" />
     </Button>
   );
 };

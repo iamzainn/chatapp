@@ -22,6 +22,9 @@ const Sidebar = forwardRef<HTMLDivElement, SidebarProps>(({ isCollapsed }, ref) 
   const chatsData: ChatData | undefined = useQuery(api.chats.getUserChats, 
     isAuthenticated ? undefined : 'skip'
   );
+  const me:User | undefined = useQuery(api.users.getMe, 
+    isAuthenticated ? undefined : 'skip'
+  );
 
  
 
@@ -95,6 +98,7 @@ const Sidebar = forwardRef<HTMLDivElement, SidebarProps>(({ isCollapsed }, ref) 
                       isSelected={selectedChat?._id === chat._id}
                       isCollapsed={isCollapsed}
                       onClick={() => handleChatClick(chat)}
+                      currentUserId={me?._id!}
                       
                     />
                   </div>
@@ -117,6 +121,7 @@ const Sidebar = forwardRef<HTMLDivElement, SidebarProps>(({ isCollapsed }, ref) 
                       isSelected={selectedChat?._id === group._id}
                       isCollapsed={isCollapsed}
                       onClick={() => handlegroupChatClick(group)}
+                      currentUserId={me?._id!}
                       
                     />
                   </div>
