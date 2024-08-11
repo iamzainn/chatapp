@@ -18,21 +18,18 @@ export const getUserChats = query({
 
 		if (!user) throw new ConvexError("User not found");
 
-  
-  
-      // Fetch all chats
       let chats = await ctx.db
         .query("chats")
         .order("desc")
         .collect();
   
-      // Filter chats to include only those where the user is a participant
+    
       chats = chats.filter((chat) => chat.participants.includes(user._id));
   
       const oneOnOneChats: OneOnOneChat[] = [];
       const groups: GroupChat[] = [];
   
-      // Process each chat
+      
       await Promise.all(
         chats.map(async (chat) => {
           const lastMessage = chat.lastMessageId
@@ -50,7 +47,7 @@ export const getUserChats = query({
               }
           }));
           
-          // console.log("Users after fetch:", Users);
+        
               
             const groupChat: GroupChat = {
               _id: chat._id,
@@ -261,6 +258,16 @@ export const generateUploadUrl = mutation(async (ctx) => {
 export const removeUserFromGroup = mutation({
   args: { chatId: v.id("chats"), userId: v.id("users") },
   handler: async (ctx, { chatId, userId }) => {
+
+    const identity = await ctx.auth.getUserIdentity();
+		if (!identity) throw new ConvexError("Unauthorized");
+
+		const user = await ctx.db
+			.query("users")
+			.withIndex("by_tokenIdentifier", (q) => q.eq("tokenIdentifier", identity.tokenIdentifier))
+			.unique();
+
+		if (!user) throw new ConvexError("User not found");
     // Fetch the chat
     const chat = await ctx.db.get(chatId);
     if (!chat) {
@@ -303,6 +310,16 @@ export const removeUserFromGroup = mutation({
 export const makeUserAdmin = mutation({
   args: { chatId: v.id("chats"), userId: v.id("users") },
   handler: async (ctx, { chatId, userId }) => {
+    const identity = await ctx.auth.getUserIdentity();
+		if (!identity) throw new ConvexError("Unauthorized");
+
+		const user = await ctx.db
+			.query("users")
+			.withIndex("by_tokenIdentifier", (q) => q.eq("tokenIdentifier", identity.tokenIdentifier))
+			.unique();
+
+		if (!user) throw new ConvexError("User not found");
+
     const chat = await ctx.db.get(chatId);
     if (!chat || !chat.isGroupChat) {
       throw new Error("Invalid chat");

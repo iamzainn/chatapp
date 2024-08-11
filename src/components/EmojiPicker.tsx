@@ -8,6 +8,7 @@ import { useTheme } from "next-themes";
 
 interface EmojiPickerProps {
 	onChange: (emoji: string) => void;
+	
 }
 
 const EmojiPicker = ({ onChange }: EmojiPickerProps) => {

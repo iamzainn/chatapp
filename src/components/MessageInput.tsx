@@ -1,6 +1,6 @@
 'use client';
 import React from 'react';
-import { Paperclip, X } from "lucide-react";
+import { Paperclip, Smile, X } from "lucide-react";
 import EmojiPicker from "../components/EmojiPicker";
 import { cn } from "@/lib/utils";
 import { Textarea } from "./ui/textarea";
@@ -38,9 +38,18 @@ const MessageInput: React.FC<MessageInputProps> = ({
         opacity: { duration: 0.5 },
         layout: { type: "spring", bounce: 0.15 },
       }}
-      className="flex-grow relative"
+      className="flex-grow relative flex items-center space-x-2"
     >
-      <div className="relative">
+      <EmojiPicker
+        onChange={(emoji: string) => {
+          setMessage(prev => prev + emoji);
+          textAreaRef.current?.focus();
+        }}
+      >
+        
+      </EmojiPicker>
+
+      <div className="relative flex-grow">
         <Textarea
           name="content"
           placeholder="Type your message..."
@@ -51,15 +60,8 @@ const MessageInput: React.FC<MessageInputProps> = ({
           onChange={(e) => setMessage(e.target.value)}
           ref={textAreaRef}
         />
-        <div className="absolute right-2 bottom-2 flex items-center space-x-1">
-          <label className="cursor-pointer">
-            <Paperclip
-              size={20}
-              className={cn(
-                "text-muted-foreground hover:text-foreground transition-colors",
-                file && "text-primary"
-              )}
-            />
+        <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
+          <label className="cursor-pointer relative">
             <input
               type="file"
               className="hidden"
@@ -67,32 +69,32 @@ const MessageInput: React.FC<MessageInputProps> = ({
               accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm"
               onChange={handleFileChange}
             />
+            <Paperclip
+              size={20}
+              className={cn(
+                "text-muted-foreground hover:text-foreground transition-colors",
+                file && "text-primary"
+              )}
+            />
+            {file && (
+              <Button
+                type="button"
+                size="sm"
+                variant="destructive"
+                className="h-4 w-4 p-0 absolute -top-2 -right-2 rounded-full"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setFile(null);
+                  setPreviewUrl(null);
+                }}
+              >
+                <X size={10} />
+              </Button>
+            )}
           </label>
-          <EmojiPicker
-            onChange={(emoji: string) => {
-              setMessage(prev => prev + emoji);
-              textAreaRef.current?.focus();
-            }}
-          />
         </div>
       </div>
-      {file && (
-        <div className="absolute -top-8 left-0 bg-background p-1 rounded-md shadow-md flex items-center space-x-2">
-          <span className="text-sm text-muted-foreground">{file.name}</span>
-          <Button
-            type="button"
-            size="sm"
-            variant="ghost"
-            className="h-6 w-6 p-0"
-            onClick={() => {
-              setFile(null);
-              setPreviewUrl(null);
-            }}
-          >
-            <X size={16} className="text-destructive" />
-          </Button>
-        </div>
-      )}
     </motion.div>
   );
 };
