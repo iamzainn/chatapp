@@ -53,8 +53,8 @@ export const UserListDialog = () => {
 			} else {
 
         const postUrl = await generateUploadUrl();
-
-				const result = await fetch(postUrl, {
+  
+	  			const result = await fetch(postUrl, {
 					method: "POST",
 					headers: { "Content-Type": selectedImage?.type! },
 					body: selectedImage,
@@ -70,6 +70,8 @@ export const UserListDialog = () => {
 					groupImage: storageId,
 				});
 			}
+
+      // console.log("my new chat", myChat);
 
 			dialogCloseRef.current?.click();
 			setSelectedUsers([]);

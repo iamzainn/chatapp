@@ -107,6 +107,7 @@ const ChatTopBar: React.FC = () => {
           {isGroupChat && (
             <GroupMembersDialog 
               chat={selectedChat} 
+              handleCloseChat={handleCloseChat}
               currentUserId={currentUser?._id!}
             />
           )}

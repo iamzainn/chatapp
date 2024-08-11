@@ -40,22 +40,25 @@ export const getUserChats = query({
             : null;
   
           if (chat.isGroupChat) {
-            let groupUsers :User[] =[] as User[]; 
+            let Users :User[] =[] as User[]; 
 
-            chat.participants.forEach(async(id) => {
-                // const user = await ctx.db.query("users").filter((q) => q.eq(q.field("_id"), id)).take(1);
-                const user = await ctx.db.get(id) as User;
-                groupUsers.push(user);
-            })
+            await Promise.all(chat.participants.map(async (id) => {
+              console.log("id", id);
+              const user = await ctx.db.get(id) as User;
+              if (user) {
+                  Users.push(user);
+              }
+          }));
+          
+          // console.log("Users after fetch:", Users);
               
             const groupChat: GroupChat = {
-              
               _id: chat._id,
               name: chat.name ?? "",
               image: chat.image ?? "",
               createdAt: chat.createdAt,
               isGroupChat: chat.isGroupChat,
-              users: groupUsers,
+              users: Users!,
               updatedAt: chat.updatedAt,
               groupAdminId: chat.adminId ?? null,
               numberOfMembers: chat.participants.length,
@@ -70,6 +73,8 @@ export const getUserChats = query({
                   }
                 : null,
             };
+
+            // console.log("groupChat",groupChat);
             groups.push(groupChat);
           } else {
             const otherUserId = chat.participants.find((id) => id !== user._id);

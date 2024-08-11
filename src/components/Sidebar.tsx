@@ -28,7 +28,7 @@ const Sidebar = forwardRef<HTMLDivElement, SidebarProps>(({ isCollapsed }, ref) 
   const isLoading = authLoading || (isAuthenticated && !chatsData);
 
   const handleChatClick = (chat: OneOnOneChat) => {
-    console.log("call")
+    
     if(chat.isGroupChat ==false){
       const currentChat:Chat = {
         isGroupChat:false,
@@ -47,8 +47,8 @@ const Sidebar = forwardRef<HTMLDivElement, SidebarProps>(({ isCollapsed }, ref) 
   };
 
   const handlegroupChatClick = (chat: GroupChat) => {
-  
-  if (chat.isGroupChat) {
+  console.log("call",chat);
+    if (chat.isGroupChat) {
     const currentChat: Chat = {
       isGroupChat: true,
       _id: chat._id,
