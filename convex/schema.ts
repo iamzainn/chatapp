@@ -36,4 +36,20 @@ export default defineSchema({
 	  .index("by_chatId", ["chatId"])
 	  .index("by_senderId", ["senderId"])
 	  .index("by_createdAt", ["createdAt"]),
+
+	  notifications: defineTable({
+		userId: v.id("users"),
+		type: v.string(), // e.g., "new_message", "group_invite", etc.
+		chatId: v.optional(v.id("chats")),
+		messageId: v.optional(v.id("messages")),
+		senderId: v.optional(v.id("users")),
+		content: v.string(),
+		isRead: v.boolean(),
+		createdAt: v.number(),
+	  })
+		.index("by_userId", ["userId"])
+		.index("by_userId_and_isRead", ["userId", "isRead"])
+		.index("by_createdAt", ["createdAt"])
+	
+	
   });

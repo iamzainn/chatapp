@@ -18,6 +18,7 @@ import type * as chats from "../chats.js";
 import type * as clerk from "../clerk.js";
 import type * as http from "../http.js";
 import type * as messages from "../messages.js";
+import type * as notifications from "../notifications.js";
 import type * as users from "../users.js";
 
 /**
@@ -33,6 +34,7 @@ declare const fullApi: ApiFromModules<{
   clerk: typeof clerk;
   http: typeof http;
   messages: typeof messages;
+  notifications: typeof notifications;
   users: typeof users;
 }>;
 export declare const api: FilterApi<

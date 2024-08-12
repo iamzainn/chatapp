@@ -18,7 +18,6 @@ interface SidebarProps {
 const Sidebar = forwardRef<HTMLDivElement, SidebarProps>(({ isCollapsed }, ref) => {
   const { selectedChat, setSelectedChat } = useSelectedChat();
   const { isAuthenticated, isLoading: authLoading } = useConvexAuth();
-  
   const chatsData = useQuery(api.chats.getUserChats, isAuthenticated ? undefined : 'skip');
   const me = useQuery(api.users.getMe, isAuthenticated ? undefined : 'skip');
 

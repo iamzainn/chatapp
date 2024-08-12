@@ -6,6 +6,7 @@ import { MessageSquare } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { ModeToggle } from './Theme-toggle'
 import Auth from './Auth'
+import NotificationBell from './NotificationBell'
 
 const Header = () => {
   const [isScrolled, setIsScrolled] = useState(false)
@@ -39,13 +40,7 @@ const Header = () => {
 
           <div className="flex items-center space-x-4">
             <nav className="hidden md:flex items-center space-x-4">
-              <Link
-                href="/features"
-                className="text-sm font-medium text-gray-700 dark:text-gray-200 hover:text-primary dark:hover:text-primary-light transition-colors"
-              >
-                Features
-              </Link>
-          
+              <NotificationBell />
             </nav>
             <ModeToggle />
             <Auth />
