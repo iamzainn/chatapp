@@ -8,14 +8,20 @@ import { toast } from "./ui/use-toast";
 import { useFileUpload } from "./useFileUpload";
 import { useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
-import SendButton from "./SendMessageBtn";
+
 import FilePreviewDialog from "./FIlePreviewDialog";
 import MessageInput from "./MessageInput";
+import SendButton from "./SendMessageBtn";
 
 interface Message {
   content: string;
-  type: "text" | "image" | "video" | "audio" | "file";
+  type: "text" | "image" | "video" | "link" | "file" | "audio";
 }
+
+const isLink = (text: string): boolean => {
+  const protocolRegex = /^(https?:\/\/|www\.)/i;
+  return protocolRegex.test(text.trim());
+};
 
 const ChatBottomBar: React.FC = () => {
   const [message, setMessage] = useState("");
@@ -24,12 +30,19 @@ const ChatBottomBar: React.FC = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { selectedChat } = useSelectedChat();
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [messageType, setMessageType] = useState<"text" | "link" | "file" | "image" | "video" | "audio">("text");
   const { uploadFile, isUploading } = useFileUpload();
   const sendMessages = useMutation(api.messages.sendMessages);
 
   useEffect(() => {
     handleResize();
   }, [message]);
+
+
+  const handleMessageChange = (newMessage: string) => {
+    setMessage(newMessage);
+    setMessageType(isLink(newMessage) ? "link" : "text");
+  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0] ?? null;
@@ -62,13 +75,13 @@ const ChatBottomBar: React.FC = () => {
     const messages: Message[] = [];
 
     if (message.trim()) {
-      messages.push({ content: message.trim(), type: "text" });
+      messages.push({ content: message.trim(), type: messageType });
     }
 
     if (file) {
       try {
         const fileUrl = await uploadFile(file);
-        // console.log(fileUrl);
+        
         if (fileUrl) {
           messages.push({
             content: fileUrl,
@@ -145,30 +158,33 @@ const ChatBottomBar: React.FC = () => {
         <form className="flex items-end space-x-2" onSubmit={(e) => { e.preventDefault(); handleSendMessage(); }}>
           <MessageInput
             message={message}
-            setMessage={setMessage}
+            setMessage={handleMessageChange}
             textAreaRef={textAreaRef}
             handleKeyDown={handleKeyDown}
             file={file}
             setFile={setFile}
             setPreviewUrl={setPreviewUrl}
             handleFileChange={handleFileChange}
+            messageType={messageType}
           />
 
-          <SendButton
-            isLoading={isUploading}
-            onClick={handleSendMessage}
-            showSend={!!message.trim() || !!file}
-          />
+<SendButton
+    isLoading={isUploading}
+    showSend={!!message.trim() || !!file}
+  />
 
-          {!message.trim() && !file && (
-            <Button
-              type="button"
-              size="icon"
-              variant="ghost"
-              onClick={() => handleSendMessage()}
-            >
-              <ThumbsUp className="h-4 w-4" />
-            </Button>
+  {!message.trim() && !file && (
+    <Button
+      type="button"
+      size="icon"
+      variant="ghost"
+      onClick={(e) => {
+        e.preventDefault();
+        handleSendMessage();
+      }}
+    >
+      <ThumbsUp className="h-4 w-4" />
+     </Button>
           )}
         </form>
       </AnimatePresence>

@@ -31,7 +31,7 @@ export default defineSchema({
 	  createdAt: v.number(),
 	  senderId: v.id("users"),
 	  chatId: v.id("chats"),
-	  type: v.string(), // "text" | "image" | "video" | "audio" | "file"
+	  type: v.string(), // "text" | "image" | "video" | "link" | "file"
 	})
 	  .index("by_chatId", ["chatId"])
 	  .index("by_senderId", ["senderId"])

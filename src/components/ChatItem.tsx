@@ -3,7 +3,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { format } from 'date-fns';
-import { Image, Video, FileText, MessageSquare, Check } from 'lucide-react';
+import { Image, Video, FileText, MessageSquare, Check, Link } from 'lucide-react';
 import { OneOnOneChat, Message, User } from '@/convexlibs/dbtypes';
 import { Badge } from './ui/badge';
 
@@ -28,6 +28,9 @@ const ChatItem: React.FC<ChatItemProps> = ({ chat, isSelected, isCollapsed, onCl
           return <Video size={14} className="mr-1 text-muted-foreground" />;
         case 'file':
           return <FileText size={14} className="mr-1 text-muted-foreground" />;
+          case 'link':   
+          
+          return <Link size={14} className="mr-1 text-muted-foreground"></Link>  
         default:
           return <MessageSquare size={14} className="mr-1 text-muted-foreground" />;
       }

@@ -3,7 +3,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { Users, Image, Video, FileText, MessageSquare, Check } from "lucide-react";
+import { Users, Image, Video, FileText, MessageSquare, Check, Link } from "lucide-react";
 import { format } from 'date-fns';
 import { GroupChat, Message } from '@/convexlibs/dbtypes';
 
@@ -30,8 +30,12 @@ const GroupItem: React.FC<GroupItemProps> = ({ group, isSelected, isCollapsed, o
           return <Video size={14} className="mr-1 text-muted-foreground" />;
         case 'file':
           return <FileText size={14} className="mr-1 text-muted-foreground" />;
-        default:
-          return <MessageSquare size={14} className="mr-1 text-muted-foreground" />;
+        case 'link':   
+          
+          return <Link size={14} className="mr-1 text-muted-foreground"></Link>
+
+          default:
+          return <MessageSquare size={14} className="mr-1 text-muted-foreground" />
       }
     };
 

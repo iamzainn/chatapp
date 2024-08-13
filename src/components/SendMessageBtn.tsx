@@ -1,19 +1,16 @@
-import React from 'react';
 import { Loader2, SendHorizontal } from "lucide-react";
-import { Button } from "../components/ui/button";
+import { Button } from "./ui/button";
 import { cn } from "@/lib/utils";
 
 interface SendButtonProps {
   isLoading: boolean;
-  onClick: () => void;
   showSend: boolean;
 }
 
-const SendButton: React.FC<SendButtonProps> = ({ isLoading, onClick, showSend }) => {
+const SendButton: React.FC<SendButtonProps> = ({ isLoading, showSend }) => {
   return (
     <Button
       disabled={isLoading}
-      onClick={onClick}
       type="submit"
       size="icon"
       className={cn(

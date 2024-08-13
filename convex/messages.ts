@@ -30,7 +30,7 @@ export const fetchChatMessages = query({
 
   const messageSchema = v.object({
     content: v.string(),
-    type: v.union(v.literal("text"), v.literal("image"), v.literal("video"), v.literal("audio"), v.literal("file")),
+    type: v.union(v.literal("text"), v.literal("image"), v.literal("video"), v.literal("audio"), v.literal("file"), v.literal("link")),
   });
   
   // Define the input schema for the mutation

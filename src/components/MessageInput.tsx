@@ -7,15 +7,18 @@ import { Textarea } from "./ui/textarea";
 import { Button } from './ui/button';
 import { motion } from 'framer-motion';
 
+
+
 interface MessageInputProps {
-  message: string;
-  setMessage: React.Dispatch<React.SetStateAction<string>>;
+  message: string | "link";
+  setMessage: (message: string) => void;
   textAreaRef: React.RefObject<HTMLTextAreaElement>;
   handleKeyDown: (e: React.KeyboardEvent<HTMLTextAreaElement>) => void;
   file: File | null;
   setFile: React.Dispatch<React.SetStateAction<File | null>>;
   setPreviewUrl: React.Dispatch<React.SetStateAction<string | null>>;
   handleFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  messageType:"text" | "link" | "file" | "image" | "video" | "audio";
 }
 
 const MessageInput: React.FC<MessageInputProps> = ({
@@ -28,6 +31,24 @@ const MessageInput: React.FC<MessageInputProps> = ({
   setPreviewUrl,
   handleFileChange
 }) => {
+
+  const handleEmojiSelect = (emoji: string) => {
+    const cursorPosition = textAreaRef.current?.selectionStart || 0;
+    const textBeforeCursor = message.slice(0, cursorPosition);
+    const textAfterCursor = message.slice(cursorPosition);
+    const newMessage = textBeforeCursor + emoji + textAfterCursor;
+    setMessage(newMessage);
+    
+    // Set cursor position after the inserted emoji
+    setTimeout(() => {
+      if (textAreaRef.current) {
+        textAreaRef.current.selectionStart = cursorPosition + emoji.length;
+        textAreaRef.current.selectionEnd = cursorPosition + emoji.length;
+        textAreaRef.current.focus();
+      }
+    }, 0);
+  };
+
   return (
     <motion.div
       layout
@@ -40,14 +61,11 @@ const MessageInput: React.FC<MessageInputProps> = ({
       }}
       className="flex-grow relative flex items-center space-x-2"
     >
-      <EmojiPicker
-        onChange={(emoji: string) => {
-          setMessage(prev => prev + emoji);
-          textAreaRef.current?.focus();
-        }}
-      >
+     
         
-      </EmojiPicker>
+     <EmojiPicker
+  onChange={handleEmojiSelect}
+/>
 
       <div className="relative flex-grow">
         <Textarea

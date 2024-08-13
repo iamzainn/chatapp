@@ -16,7 +16,7 @@ import { Id } from "../../convex/_generated/dataModel";
     content: string;
     createdAt: number;
     senderId: string;
-    type: string;
+    type: "image" | "text" | "link" | "video" | "file" | "audio";
   };
   
   export type OneOnOneChat = {

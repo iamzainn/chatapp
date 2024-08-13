@@ -50,8 +50,13 @@ const MessageItem = forwardRef<HTMLDivElement, MessageItemProps>(
             className='border p-2 rounded h-40 md:h-52 object-cover'
           />
         );
-      } else {
-        return <span className='bg-accent p-3 rounded-md max-w-xs break-words'>Unsupported message type</span>;
+      } else if (message.type === "link") {
+        return <span className='break-words p-3 rounded-md max-w-xs bg-accent'><a className="text-blue-600 rounded-md" target="_blank" href={message.content}>
+          {message.content}
+          </a></span>;
+      }
+      else{
+        return <span className='bg-accent p-3 rounded-md max-w-xs break-words'>{message.content}</span>;
       }
     };
 
