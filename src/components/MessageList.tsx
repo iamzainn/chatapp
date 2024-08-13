@@ -8,6 +8,7 @@ import { api } from "../../convex/_generated/api";
 
 import MessageItem from "./MessageItem";
 import MessageSkeleton from "./MessageSkeletonComponent";
+import { Message } from "@/convexlibs/dbtypes";
 
 const MessageList: React.FC = () => {
   const { selectedChat } = useSelectedChat();
@@ -42,7 +43,7 @@ const MessageList: React.FC = () => {
         {messages.map((message, index) => (
           <MessageItem
             key={message._id}
-            message={message}
+            message={message as Message}
             isCurrentUser={message.senderId === me?._id}
             showSenderInfo={selectedChat.isGroupChat}
             isLastMessage={index === messages.length - 1}

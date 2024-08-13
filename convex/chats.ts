@@ -87,7 +87,7 @@ export const getUserChats = query({
                     content: lastMessage.content,
                     createdAt: lastMessage.createdAt,
                     senderId: lastMessage.senderId,
-                    type: lastMessage.type,
+                    type: lastMessage.type as Message["type"],
                   }
                 : null,
             };
@@ -142,7 +142,7 @@ export const getUserChats = query({
                     content: lastMessage.content,
                     createdAt: lastMessage.createdAt,
                     senderId: lastMessage.senderId,
-                    type: lastMessage.type,
+                    type: lastMessage.type as Message["type"],
                   }
                 : null,
             };
