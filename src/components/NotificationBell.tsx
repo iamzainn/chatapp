@@ -1,7 +1,7 @@
 
 import { useState } from 'react'
 import { Bell } from 'lucide-react'
-import { useQuery, useMutation } from 'convex/react'
+import { useQuery, useMutation, useConvexAuth } from 'convex/react'
 
 import { Button } from '@/components/ui/button'
 import {
@@ -11,12 +11,18 @@ import {
 } from '@/components/ui/popover'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { api } from '../../convex/_generated/api'
+import { Skeleton } from './ui/skeleton'
 
 
 const NotificationBell = () => {
   const [open, setOpen] = useState(false)
-  const unreadNotifications = useQuery(api.notifications.getUnreadNotifications);
+  const { isLoading,isAuthenticated } = useConvexAuth();
+  const unreadNotifications = useQuery(api.notifications.getUnreadNotifications,isAuthenticated ? undefined : "skip");
   const markAsRead = useMutation(api.notifications.markAllNotificationsAsRead);
+
+  if (isLoading) {
+    return <Skeleton className="h-full w-full" />
+  } 
 
   const handleMarkAsRead = async () => {
     await markAsRead();

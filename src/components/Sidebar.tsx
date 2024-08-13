@@ -2,7 +2,7 @@ import React, { forwardRef } from 'react';
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useSelectedChat } from "@/store/useSelectedChat";
-import { useQuery, useConvexAuth } from "convex/react";
+import { useQuery, useConvexAuth, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import UserListDialog from "./UserlistDialogue";
 import ChatItem from './ChatItem';
@@ -20,10 +20,13 @@ const Sidebar = forwardRef<HTMLDivElement, SidebarProps>(({ isCollapsed }, ref) 
   const { isAuthenticated, isLoading: authLoading } = useConvexAuth();
   const chatsData = useQuery(api.chats.getUserChats, isAuthenticated ? undefined : 'skip');
   const me = useQuery(api.users.getMe, isAuthenticated ? undefined : 'skip');
-
+   
   const isLoading = authLoading || (isAuthenticated && !chatsData);
+  const markAllNotficationChatsAsRead = useMutation(api.notifications.markChatNotificationsAsRead);
 
-  const handleChatClick = (chat: OneOnOneChat | GroupChat) => {
+
+
+  const handleChatClick = async(chat: OneOnOneChat | GroupChat) => {
     const currentChat: Chat = chat.isGroupChat
       ? {
           isGroupChat: true,
@@ -47,6 +50,7 @@ const Sidebar = forwardRef<HTMLDivElement, SidebarProps>(({ isCollapsed }, ref) 
           updatedAt: chat.updatedAt,
           user: (chat as OneOnOneChat).user as User,
         };
+     await markAllNotficationChatsAsRead({ chatId: currentChat._id });   
     setSelectedChat(currentChat);
   };
 

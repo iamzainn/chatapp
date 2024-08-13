@@ -46,6 +46,24 @@ export const getUserChats = query({
                   Users.push(user);
               }
           }));
+            
+          const unreadNotifications = await ctx.db
+            .query("notifications")
+            .filter((q) =>
+              q.and(
+                q.eq(q.field("chatId"), chat._id),
+                q.eq(q.field("isRead"), false)
+              )
+            )
+            .collect();
+
+            const totals = unreadNotifications.length;
+            const senderId = unreadNotifications[0]?.senderId
+
+
+
+          
+            
           
         
               
@@ -56,6 +74,9 @@ export const getUserChats = query({
               createdAt: chat.createdAt,
               isGroupChat: chat.isGroupChat,
               users: Users!,
+              UnreadNotifications:{
+                totals,
+                senderId}, 
               updatedAt: chat.updatedAt,
               groupAdminId: chat.adminId ?? null,
               numberOfMembers: chat.participants.length,
@@ -78,11 +99,30 @@ export const getUserChats = query({
             const otherUser = otherUserId
               ? await ctx.db.get(otherUserId)
               : null;
+
+              const unreadNotifications = await ctx.db
+            .query("notifications")
+            .filter((q) =>
+              q.and(
+                q.eq(q.field("chatId"), chat._id),
+                q.eq(q.field("isRead"), false)
+              )
+            )
+            .collect();
+
+            const totals = unreadNotifications.length;
+            const senderId = unreadNotifications[0]?.senderId
+
+
+            
   
             const oneOnOneChat: OneOnOneChat = {
               _id: chat._id,
               isGroupChat: chat.isGroupChat,
               createdAt: chat.createdAt,
+              UnreadNotifications:{
+                totals,
+                senderId},
               updatedAt: chat.updatedAt,
               lastMessageId: chat.lastMessageId ?? null,
               user: otherUser
@@ -140,7 +180,7 @@ export const createConversation = mutation({
 
     if (!me) throw new ConvexError("User not found");
 
-    // Check for existing conversation
+   
     const existingConversation = await ctx.db
       .query("chats")
       .filter((q) =>
@@ -166,6 +206,7 @@ export const createConversation = mutation({
       updatedAt: Date.now(),
       lastMessageId: undefined,
       lastMessage: undefined,
+      UnreadNotifications:{totals:0, senderId:me._id}, 
       name:'',
       image:'',
       adminId: args.adminId as Id<"users">,
@@ -182,7 +223,7 @@ export const createConversation = mutation({
       }
     }
     const newChatId = await ctx.db.insert("chats", newChatData);
-    console.log("newChatId", newChatId);
+ 
 
     return await formatNewChat(ctx, newChatId, args.isGroupChat, me._id);
   },
@@ -201,6 +242,8 @@ async function formatExistingChat(
     const users = await Promise.all(
       chat.participants.map((id: Id<"users">) => ctx.db.get(id))
     )
+
+
     return {
       _id: chat._id,
       isGroupChat: true,

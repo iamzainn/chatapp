@@ -1,6 +1,7 @@
 import React from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { Users, Image, Video, FileText, MessageSquare, Check } from "lucide-react";
 import { format } from 'date-fns';
@@ -14,7 +15,10 @@ interface GroupItemProps {
   currentUserId: string;
 }
 
-const GroupItem: React.FC<GroupItemProps> = ({ group, isSelected, isCollapsed, onClick , currentUserId}) => {
+const GroupItem: React.FC<GroupItemProps> = ({ group, isSelected, isCollapsed, onClick, currentUserId }) => {
+  const senderId = group?.UnreadNotifications?.senderId;
+  const unreadCount = group?.UnreadNotifications?.totals || 0;
+
   const renderLastMessage = (lastMessage: Message | null) => {
     if (!lastMessage) return null;
 
@@ -52,26 +56,36 @@ const GroupItem: React.FC<GroupItemProps> = ({ group, isSelected, isCollapsed, o
           )}
           <span className="text-[10px]">{format(new Date(lastMessage.createdAt), 'HH:mm')}</span>
         </div>
-        {/* <span className="text-[10px] shrink-0">{format(new Date(lastMessage.createdAt), 'HH:mm')}</span> */}
       </div>
     );
   };
 
   const GroupAvatar = () => (
     <Avatar className={cn(
-      "shrink-0 transition-all",
-      isCollapsed && "cursor-pointer hover:ring-2 hover:ring-primary size-7",
-      !isCollapsed && "size-9"
+      "shrink-0 transition-all bg-primary",
+      isCollapsed ? "size-7" : "size-9"
     )}>
-      <AvatarImage src={group.image} alt={group.name} />
       <AvatarFallback>{group.name[0]}</AvatarFallback>
     </Avatar>
   );
 
+  const NotificationBadge = () => {
+    if (senderId === currentUserId || unreadCount === 0) return null;
+    return (
+      <Badge 
+        variant="destructive" 
+        className="absolute top-0 right-0 px-1 min-w-[1.5rem] h-5 flex items-center justify-center text-xs font-bold rounded-full"
+      >
+        {unreadCount > 99 ? '99+' : unreadCount}
+      </Badge>
+    );
+  };
+
   if (isCollapsed) {
     return (
-      <div className="flex justify-center my-2" onClick={() => onClick(group)}>
+      <div className="flex justify-center my-2 relative" onClick={() => onClick(group)}>
         <GroupAvatar />
+        <NotificationBadge />
       </div>
     );
   }
@@ -82,7 +96,7 @@ const GroupItem: React.FC<GroupItemProps> = ({ group, isSelected, isCollapsed, o
       variant="ghost"
       size="sm"
       className={cn(
-        "w-full justify-start gap-3 my-1 p-2 transition-all",
+        "w-full justify-start gap-3 my-1 p-2 transition-all relative",
         isSelected ? "bg-accent text-accent-foreground" : "hover:bg-accent/10 dark:hover:bg-accent/20",
         "dark:text-foreground"
       )}
@@ -90,10 +104,13 @@ const GroupItem: React.FC<GroupItemProps> = ({ group, isSelected, isCollapsed, o
     >
       <GroupAvatar />
       <div className="flex flex-col items-start overflow-hidden w-full">
-        <span className="font-medium text-sm truncate w-full">{group.name}</span>
+        <span className="font-medium text-sm truncate w-full">
+          <Users size={14} className="inline mr-1" />
+          {group.name}
+        </span>
         {renderLastMessage(group.lastMessage)}
       </div>
-      <Users size={14} className="ml-auto text-muted-foreground shrink-0" />
+      <NotificationBadge />
     </Button>
   );
 };

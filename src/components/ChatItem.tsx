@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { format } from 'date-fns';
 import { Image, Video, FileText, MessageSquare, Check } from 'lucide-react';
 import { OneOnOneChat, Message, User } from '@/convexlibs/dbtypes';
+import { Badge } from './ui/badge';
 
 interface ChatItemProps {
   chat: OneOnOneChat;
@@ -14,10 +15,11 @@ interface ChatItemProps {
   currentUserId: string;
 }
 
-const ChatItem: React.FC<ChatItemProps> = ({ chat, isSelected, isCollapsed, onClick, currentUserId }) => {
+const ChatItem: React.FC<ChatItemProps> = ({ chat, isSelected, isCollapsed, onClick, currentUserId })=> {
+  const senderId = chat?.UnreadNotifications?.senderId;
+  const unreadCount = chat?.UnreadNotifications?.totals || 0;
   const renderLastMessage = (lastMessage: Message | null) => {
     if (!lastMessage) return null;
-
     const getMessageIcon = () => {
       switch (lastMessage.type) {
         case 'image':
@@ -72,10 +74,23 @@ const ChatItem: React.FC<ChatItemProps> = ({ chat, isSelected, isCollapsed, onCl
     </div>
   );
 
+  const NotificationBadge = () => {
+    if (senderId === currentUserId || unreadCount === 0) return null;
+    return (
+      <Badge 
+        variant="destructive" 
+        className="absolute top-0 right-0 px-1 min-w-[1.5rem] h-5 flex items-center justify-center text-xs font-bold rounded-full"
+      >
+        {unreadCount > 99 ? '99+' : unreadCount}
+      </Badge>
+    );
+  };
+
   if (isCollapsed) {
     return (
-      <div className="flex justify-center my-2">
+      <div className="flex justify-center my-2 relative">
         <AvatarWithStatus user={chat.user} />
+        <NotificationBadge />
       </div>
     );
   }
@@ -86,7 +101,7 @@ const ChatItem: React.FC<ChatItemProps> = ({ chat, isSelected, isCollapsed, onCl
       variant="ghost"
       size="sm"
       className={cn(
-        "w-full justify-start gap-3 my-1 p-2 transition-all",
+        "w-full justify-start gap-3 my-1 p-2 transition-all relative",
         isSelected ? "bg-accent text-accent-foreground" : "hover:bg-accent/10 dark:hover:bg-accent/20",
         "dark:text-foreground"
       )}
@@ -97,6 +112,7 @@ const ChatItem: React.FC<ChatItemProps> = ({ chat, isSelected, isCollapsed, onCl
         <span className="font-medium text-sm truncate w-full">{chat.user?.name || "Unknown User"}</span>
         {renderLastMessage(chat.lastMessage)}
       </div>
+      <NotificationBadge />
     </Button>
   );
 };

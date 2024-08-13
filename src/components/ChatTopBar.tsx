@@ -9,7 +9,9 @@ import { useToast } from "@/components/ui/use-toast";
 import { useUser } from '@clerk/nextjs';
 import GroupMembersDialog from './GroupMembersList';
 
+
 import { User } from '@/convexlibs/dbtypes';
+import { useRouter } from 'next/navigation';
 
 
 interface ActionButtonProps {
@@ -47,7 +49,7 @@ const ActionButton: React.FC<ActionButtonProps> = ({
 const ChatTopBar: React.FC = () => {
   const { selectedChat, setSelectedChat} = useSelectedChat();
 
-  
+  const router = useRouter();
   const { toast } = useToast();
   const { user } = useUser();
 
@@ -74,10 +76,7 @@ const ChatTopBar: React.FC = () => {
   };
 
   const handleVideoCall = () => {
-    toast({
-      title: "Video call",
-      description: "This feature is not implemented yet.",
-    });
+   router.push("/video-call")
   };
 
   return (

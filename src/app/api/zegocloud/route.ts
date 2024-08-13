@@ -1,3 +1,4 @@
+
 import { generateToken04 } from "./zegoServerAssistant";
 
 export async function GET(req: Request) {

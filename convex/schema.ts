@@ -1,7 +1,6 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 
-
 export default defineSchema({
 	users: defineTable({
 	  email: v.string(),
@@ -16,6 +15,7 @@ export default defineSchema({
 	  chats: defineTable({	
 	  createdAt: v.number(),
 	  updatedAt: v.number(),
+	  UnreadNotifications : v.optional(v.object({totals:v.number(),senderId:v.optional(v.id("users"))})),
 	  isGroupChat: v.boolean(),
 	  name: v.optional(v.string()), // For group chats
 	  image: v.optional(v.string()), // For group chats

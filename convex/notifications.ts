@@ -96,13 +96,11 @@ export const markAllNotificationsAsRead = mutation({
 
 
 export const markChatNotificationsAsRead = mutation({
-  args: { userId: v.id("users"), chatId: v.id("chats") },
+  args: { chatId: v.id("chats") },
   handler: async (ctx, args) => {
     const unreadNotifications = await ctx.db
       .query("notifications")
-      .withIndex("by_userId_and_isRead", (q) => 
-        q.eq("userId", args.userId).eq("isRead", false)
-      )
+      
       .filter((q) => q.eq(q.field("chatId"), args.chatId))
       .collect();
 

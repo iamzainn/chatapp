@@ -20,9 +20,11 @@ import { Id } from "../../convex/_generated/dataModel";
   };
   
   export type OneOnOneChat = {
+    
     _id: Id<"chats">
     isGroupChat: boolean;
     createdAt: number;
+    UnreadNotifications?:UnreadNotifications
     updatedAt: number;
     lastMessageId: Id<"messages"> | null;
     user: User | null;
@@ -36,6 +38,7 @@ import { Id } from "../../convex/_generated/dataModel";
     image: string;
     createdAt: number;
     updatedAt: number;
+    UnreadNotifications?:UnreadNotifications
     users: User[];
     groupAdminId: string | null;
     numberOfMembers: number;
@@ -48,15 +51,23 @@ import { Id } from "../../convex/_generated/dataModel";
     usergroupschats: GroupChat[];
   };
 
+  export type UnreadNotifications = {
+   totals:number,
+   senderId ?:Id<"users">
+  }
+ 
+
   export type Chat ={
     _id: Id<"chats">
     createdAt: number
     updatedAt: number
+    UnreadNotifications?:UnreadNotifications
     lastMessageId: Id<"messages"> | null
     lastMessage: Message | null
   } & (
     {
       isGroupChat: true
+
       name: string
       image: string
       groupAdminId: string
