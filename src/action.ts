@@ -22,10 +22,10 @@ function cleanS3Url(url:string) {
 
 
 const s3Client = new S3Client({
-	region: process.env.AWS_BUCKET_REGION!,
+	region: process.env.BUCKET_REGION!,
 	credentials: {
-	  accessKeyId: process.env.AWS_ACCESS_KEY!,
-	  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+	  accessKeyId: process.env.ACCESS_KEY!,
+	  secretAccessKey: process.env.SECRET_ACCESS_KEY!,
 	},
   })
   const maxFileSize = 1048576 * 10 // 1 MB
@@ -71,7 +71,7 @@ const generateFileName = (bytes = 32) => crypto.randomBytes(bytes).toString("hex
 
   
 	const putObjectCommand = new PutObjectCommand({
-	  Bucket: process.env.AWS_BUCKET_NAME!,
+	  Bucket: process.env.BUCKET_NAME!,
 	  Key: generateFileName(),
 	  ContentType: fileType,
 	  ContentLength: fileSize,
