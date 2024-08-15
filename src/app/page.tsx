@@ -7,8 +7,6 @@ import Pricing from "@/components/Pricing"
 
 import Testimonials from "@/components/Testimonials"
 
-
-
 const LandingPage: React.FC = () => {
   return (
     <div className="flex flex-col min-h-screen">
