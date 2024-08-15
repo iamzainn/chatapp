@@ -32,6 +32,10 @@ const ChatBottomBar: React.FC = () => {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [messageType, setMessageType] = useState<"text" | "link" | "file" | "image" | "video" | "audio">("text");
   const { uploadFile, isUploading } = useFileUpload();
+
+  console.log("Selected file:", file);
+  console.log("Message type:", messageType);
+
   const sendMessages = useMutation(api.messages.sendMessages);
 
   useEffect(() => {
@@ -81,7 +85,6 @@ const ChatBottomBar: React.FC = () => {
     if (file) {
       try {
         const fileUrl = await uploadFile(file);
-        
         if (fileUrl) {
           messages.push({
             content: fileUrl,

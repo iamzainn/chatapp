@@ -21,7 +21,7 @@ export const useFileUpload = () => {
 
       const { url } = signedURLResult.success;
 
-      console.log("success url", url);
+      console.log("Attempting to upload to URL:", url);
 
       const response = await fetch(url, {
         method: "PUT",

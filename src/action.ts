@@ -8,17 +8,6 @@ import crypto from "crypto"
 
 import {  currentUser } from "@clerk/nextjs/server";
 
-function cleanS3Url(url:string) {
-	try {
-	  const urlObject = new URL(url);
-	  const pathParts = urlObject.pathname.split('/');
-	  const filename = pathParts[pathParts.length - 1];
-	  return `${urlObject.origin}/${filename}`;
-	} catch (error) {
-	  console.error('Invalid URL:', error);
-	  return null;
-	}
-  }
 
 
 const s3Client = new S3Client({
@@ -53,9 +42,15 @@ const s3Client = new S3Client({
 
 	const user = await currentUser();
 
+
+
 	if (!user) {
 	  return { failure: "User not found" }
 	}
+   console.log("User:", user);
+console.log("File type:", fileType);
+console.log("File size:", fileSize);
+console.log("Checksum:", checksum);
 
        
 	// first just make sure in our code that we're only allowing the file types we want
@@ -81,6 +76,9 @@ const generateFileName = (bytes = 32) => crypto.randomBytes(bytes).toString("hex
 		userId: user?.id
 	  },
 
+	  
+	  
+
 
 	  
 
@@ -89,6 +87,8 @@ const generateFileName = (bytes = 32) => crypto.randomBytes(bytes).toString("hex
 
 
   )
+
+  
 
   const url = await getSignedUrl(
 	s3Client,
